@@ -23,3 +23,50 @@ certmgrOperator:
   #   - "--acme-http01-solver-nameservers=8.8.8.8:53,1.1.1.1:53"
   #   - "--v=2"
   additionalArgs: []
+
+  issuers:
+    # -- ACME settings
+    acme:
+      # -- Email to use for ACME account
+      email: "user@example.com"
+      # -- ACME profile to use (optional)
+      # An ACME server may support multiple profiles, such as "staging" and "production".
+      # If not specified, the default profile will be used.
+      # Check the ACME server documentation for available profiles.
+      # Examples: https://letsencrypt.org/docs/profiles/
+      profile: "tlsserver"
+      # -- ACME server to use
+      # Examples:
+      #  - https://acme-staging-v02.api.letsencrypt.org/directory
+      #  - https://acme-v02.api.letsencrypt.org/directory
+      server: "https://acme-staging-v02.api.letsencrypt.org/directory"
+      # -- Disable ACME account creation
+      # If true, the ACME account will not be created.
+      # This is useful if you want to use an existing ACME account.
+      # If false, the ACME account will be created.
+      # This is useful if you want to use a new ACME account.
+      disableAccountCreation: false
+      # -- ACME solvers to use (optional)
+      # You can specify multiple solvers for different challenges.
+      # Examples:
+      #  - dns01:
+      #      route53:
+      #        region: "us-east-1"
+      #        accessKeyID: "access-key-id"
+      #        secretAccessKeySecretRef: "secret-access-key"
+      #        hostedZoneID: "hosted-zone-id"
+      solvers: []
+      # If you want to use the integration with the Cloud Credentials Operator instead of the solvers, you can add the properties aws, azure or gcp.
+      # The Cloud Credentials Operator will be used to get the credentials for the AWS, Azure or GCP account.
+      # The credentials will be stored in the aws-credentials, azure-credentials or gcp-credentials secret.
+      # The secret will be created by the cert-manager-credentials-request.yaml template.
+      # -- AWS settings (optional)
+      aws:
+        # -- AWS region
+        region: "us-east-1"
+        # -- AWS hosted zone ID
+        hostedZoneID: "hosted-zone-id"
+      # -- Azure settings (optional)
+      # azure:
+      # -- GCP settings (optional)
+      # gcp:

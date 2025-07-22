@@ -1,0 +1,41 @@
+{{- if .Values.certmgrOperator.issuers }}
+{{- range $name, $issuer := .Values.certmgrOperator.issuers }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ $name }}
+spec:
+  {{ $name }}:
+{{- if eq $name "acme" }}
+{{- include "acme.validations" $ }}
+    email: {{ $issuer.email }}
+{{- if $issuer.profile }}
+    profile: {{ $issuer.profile }}
+{{- end }}
+    server: {{ $issuer.server }}
+{{- if not $issuer.disableAccountCreation }}
+    disableAccountKeyGeneration: {{ $issuer.disableAccountCreation }}
+{{- end }}
+    privateKeySecretRef:
+      name: {{ $name }}-issuer-account-key
+    solvers:
+{{- if $issuer.aws }}
+      - dns01:
+        route53:
+          region: {{ $issuer.aws.region | default "us-east-1" }}
+{{- if $issuer.aws.hostedZoneID }}
+          hostedZoneID: {{ $issuer.aws.hostedZoneID }}
+{{- end }}
+          accessKeyIDSecretRef:
+            name: aws-credentials
+            key: aws_access_key_id
+          secretAccessKeySecretRef:
+            name: aws-credentials
+            key: aws_secret_access_key
+{{- end }}
+{{- range $issuer.solvers }}
+      - {{ toYaml . | nindent 8 | trim }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
