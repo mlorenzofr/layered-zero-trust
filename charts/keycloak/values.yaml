@@ -22,3 +22,45 @@ keycloak:
     username: keycloak
     database: keycloak
     passwordVaultKey: secret/data/global/keycloak
+
+  # -- Keycloak realms to import
+  # Example realm configuration
+  # ztvp:
+  #   displayName: "ZTVP Realm"
+  #   clients:
+  #     - clientId: "quarkus-app"
+  #       name: "quarkus"
+  #       publicClient: true
+  #       redirectUris:
+  #         - "https://cat-server.example.com/*"
+  #       webOrigins:
+  #         - "+"
+  #       enabled: true
+  #       protocol: "openid-connect"
+  #     users:
+  #       - username: "quarkus-admin"
+  #       enabled: true
+  #       email: "quarkus-admin@example.com"
+  #       firstName: "Quarkus"
+  #       lastName: "Admin"
+  #       credentials:
+  #         - type: "password"
+  #           value: "rDlobaGjL2"
+  #           temporary: true
+  #       realmRoles:
+  #         - "quarkus-admin"
+  #     - username: "quarkus-user1"
+  #       enabled: true
+  #       email: "quarkus-user1@example.com"
+  #       firstName: "Quarkus"
+  #       lastName: "User-1"
+  #       credentials:
+  #         - type: "password"
+  #           value: "LuOSkWDb0P"
+  #           temporary: true
+  #     roles:
+  #       - name: "quarkus-admin"
+  #         description: "Quarkus App Administrator"
+  #       - name: "viewer"
+  #         description: "Read-only access" 
+  realms: {}

@@ -1,0 +1,24 @@
+{{- range $realm, $realmConfig := .Values.keycloak.realms }}
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: KeycloakRealmImport
+metadata:
+  name: "{{ $realm }}-realm-import"
+  namespace: "{{ $.Release.Namespace }}"
+spec:
+  keycloakCRName: keycloak
+  realm:
+    realm: "{{ $realm }}"
+    displayName: "{{ $realmConfig.displayName }}"
+    enabled: true
+    registrationAllowed: false
+
+    clients:
+{{- toYaml $realmConfig.clients | nindent 6 }}
+
+    users:
+{{- toYaml $realmConfig.users | nindent 6 }}
+
+    roles:
+      realm:
+{{- toYaml $realmConfig.roles | nindent 8 }}
+{{- end }}
