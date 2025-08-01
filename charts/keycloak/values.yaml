@@ -39,28 +39,30 @@ keycloak:
   #       protocol: "openid-connect"
   #     users:
   #       - username: "quarkus-admin"
-  #       enabled: true
-  #       email: "quarkus-admin@example.com"
-  #       firstName: "Quarkus"
-  #       lastName: "Admin"
-  #       credentials:
-  #         - type: "password"
-  #           value: "rDlobaGjL2"
-  #           temporary: true
-  #       realmRoles:
-  #         - "quarkus-admin"
-  #     - username: "quarkus-user1"
-  #       enabled: true
-  #       email: "quarkus-user1@example.com"
-  #       firstName: "Quarkus"
-  #       lastName: "User-1"
-  #       credentials:
-  #         - type: "password"
-  #           value: "LuOSkWDb0P"
-  #           temporary: true
+  #         enabled: true
+  #         email: "quarkus-admin@example.com"
+  #         firstName: "Quarkus"
+  #         lastName: "Admin"
+  #         credentials:
+  #           - type: "password"
+  #             value: "rDlobaGjL2"
+  #             temporary: true
+  #         realmRoles:
+  #           - "quarkus-admin"
+  #       - username: "quarkus-user1"
+  #         enabled: true
+  #         email: "quarkus-user1@example.com"
+  #         firstName: "Quarkus"
+  #         lastName: "User-1"
+  #         credentials:
+  #           - type: "password"
+  #             value: "LuOSkWDb0P"
+  #             temporary: true
+  #         realmRoles:
+  #           - "viewer"
   #     roles:
   #       - name: "quarkus-admin"
   #         description: "Quarkus App Administrator"
   #       - name: "viewer"
-  #         description: "Read-only access" 
+  #         description: "Read-only access"
   realms: {}
