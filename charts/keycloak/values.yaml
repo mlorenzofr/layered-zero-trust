@@ -24,7 +24,7 @@ keycloak:
     passwordVaultKey: secret/data/global/keycloak
 
   # Toggle to enable/disable default realm configuration
-  defaultConfig: false
+  defaultConfig: true
   # Default realm configuration
   defaultRealm:
     realm: "ztvp"
