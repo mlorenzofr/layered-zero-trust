@@ -57,6 +57,11 @@ endif
 # Helm does the right thing and fetches all the tags and detects the newest one
 PATTERN_INSTALL_CHART ?= oci://quay.io/hybridcloudpatterns/pattern-install
 
+# These variables are used to configure SPIFFE/JWT authentication for Vault
+OIDC_DISCOVERY_URL ?=
+SPIFFE_AUDIENCE ?=
+SPIFFE_SUBJECT ?=
+
 ##@ Pattern Common Tasks
 
 .PHONY: help

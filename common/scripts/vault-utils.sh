@@ -26,5 +26,23 @@ if [ -z ${TASK} ]; then
 fi
 
 EXTRA_PLAYBOOK_OPTS="${EXTRA_PLAYBOOK_OPTS:-}"
+OIDC_DISCOVERY_URL="${OIDC_DISCOVERY_URL:-}"
+SPIFFE_AUDIENCE="${SPIFFE_AUDIENCE:-}"
+SPIFFE_SUBJECT="${SPIFFE_SUBJECT:-}"
 
-ansible-playbook -t "${TASK}" -e pattern_name="${PATTERN_NAME}" -e pattern_dir="${PATTERNPATH}" ${EXTRA_PLAYBOOK_OPTS} "rhvp.cluster_utils.vault"
+if [ -z "${OIDC_DISCOVERY_URL}" ] || [ -z "${SPIFFE_AUDIENCE}" ] || [ -z "${SPIFFE_SUBJECT}" ]; then
+  VAULT_JWT_CONFIG="false"
+  echo "Vault JWT config is disabled"
+else
+  VAULT_JWT_CONFIG="true"
+  echo "Vault JWT config is enabled"
+fi
+
+ansible-playbook -t "${TASK}" \
+  -e pattern_name="${PATTERN_NAME}" \
+  -e pattern_dir="${PATTERNPATH}" \
+  -e vault_jwt_config="${VAULT_JWT_CONFIG}" \
+  -e oidc_discovery_url="${OIDC_DISCOVERY_URL}" \
+  -e spiffe_audience="${SPIFFE_AUDIENCE}" \
+  -e spiffe_subject="${SPIFFE_SUBJECT}" \
+  ${EXTRA_PLAYBOOK_OPTS} "rhvp.cluster_utils.vault"
