@@ -1,0 +1,137 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spire-federated-identities
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: spire-federated-identities
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: deployer
+  namespace: spire-federated-identities
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: workload-app
+  namespace: spire-federated-identities
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: workload-app
+  namespace: spire-federated-identities
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  name: workload-app
+  namespace: spire-federated-identities
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: workload-app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: workload-app
+        deployment: workload-app
+    spec:
+      containers:
+      - command:
+        - /bin/bash
+        - -c
+        - |
+          #!/bin/bash
+
+          cat << EOF > /opt/app-root/src/get-spiffe-token.py
+          #!/opt/app-root/bin/python
+
+          from spiffe import JwtSource
+          import argparse
+
+
+          parser = argparse.ArgumentParser(description='Retrieve SPIFFE Token.')
+          parser.add_argument("-a", "--audience", help="The audience to include in the token", required=True)
+          args = parser.parse_args()
+
+          with JwtSource() as source:
+              jwt_svid = source.fetch_svid(audience={args.audience})
+              print(jwt_svid.token)
+          EOF
+
+          chmod +x /opt/app-root/src/get-spiffe-token.py
+
+          pip install google-api-python-client spiffe azure-cli awscli
+
+          if [ ! -z ${GOOGLE_ENABLED} ]; then
+            curl -o /opt/app-root/src/google-cloud-cli-linux-x86_64.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz
+            tar -xf /opt/app-root/src/google-cloud-cli-linux-x86_64.tar.gz -C /opt/app-root/src
+            /opt/app-root/src/google-cloud-sdk/instal.sh -q
+            echo "export PATH=\$PATH:/opt/app-root/src/google-cloud-sdk/bin" > /opt/app-root/src/.bashrc
+            rm -f /opt/app-root/src/google-cloud-cli-linux-x86_64.tar.gz
+
+            if [ ! -z ${GOOGLE_APPLICATION_CREDENTIALS_BASE64} ] && [ ! -z ${GOOGLE_APPLICATION_CREDENTIALS} ]; then
+              echo $GOOGLE_APPLICATION_CREDENTIALS_BASE64 | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
+            fi
+          fi
+
+          # Add .ready File
+          touch /opt/app-root/src/.ready
+
+          while true; do sleep 10; done
+        env:
+        - name: SPIFFE_ENDPOINT_SOCKET
+          value: unix:///run/spire/sockets/spire-agent.sock
+        envFrom:
+        - secretRef:
+            name: workload-app
+        image: registry.redhat.io/ubi9/python-311:latest
+        imagePullPolicy: IfNotPresent
+        name: workload-app
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources: {}
+        startupProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - ls /opt/app-root/src/.ready
+          failureThreshold: 60
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /run/spire/sockets
+          name: spiffe-workload-api
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: workload-app
+      serviceAccountName: workload-app
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - csi:
+          driver: csi.spiffe.io
+          readOnly: true
+        name: spiffe-workload-api
