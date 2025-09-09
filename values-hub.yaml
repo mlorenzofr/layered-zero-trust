@@ -152,6 +152,7 @@ clusterGroup:
     # imagePullPolicy is set to always: imperative.imagePullPolicy
     # For additional overrides that apply to the jobs, please refer to
     # https://hybrid-cloud-patterns.io/imperative-actions/#additional-job-customizations
+    image: 'quay.io/mlorenzofr/imperative-container:mbp-957'
     jobs: []
   managedClusterGroups: {}
     # exampleRegion:
