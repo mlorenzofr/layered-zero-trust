@@ -1,0 +1,32 @@
+apiVersion: quay.redhat.com/v1
+kind: QuayRegistry
+metadata:
+  name: quay-registry
+  namespace: {{ .Values.quay.namespace | default "quay-enterprise" }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  components:
+    - kind: clair
+      managed: true
+    - kind: horizontalpodautoscaler
+      managed: true
+    - kind: mirror
+      managed: true
+    - kind: monitoring
+      managed: true
+    - kind: postgres
+      managed: true
+    - kind: redis
+      managed: true
+    - kind: objectstorage
+      managed: false
+    - kind: route
+      managed: true
+    - kind: tls
+      managed: true
+    - kind: quay
+      managed: true
+    - kind: clairpostgres
+      managed: true
+  configBundleSecret: {{ .Values.quay.configBundleSecret.name | default "quay-init-config-bundle-secret" }}
