@@ -26,6 +26,8 @@ The following components are included in the Layered Zero Trust Pattern
   * Secure storage of sensitive assets
 * [External Secrets Operator (ESO)](https://external-secrets.io)
   * Synchronizes secrets stored in HashiCorp Vault with OpenShift
+* [Red Hat Advanced Cluster Management (ACM)](https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.14)
+  * Provides a management control in multi-cluster scenarios
 
 ## Getting Started
 
@@ -41,7 +43,12 @@ Utilize the following steps to prepare your machine and complete any and all pre
 4. [Validated Patterns Tooling](https://validatedpatterns.io/learn/quickstart)
 5. Depending on the characteristics of your cluster, you may need additional hardware resources for Advanced Cluster Management (ACM) component. For a single node cluster you can start with 4 vCPUs, 16 GB of memory and 120 GB of storage. For more detailed information about ACM sizing, please refer to the [official documentation](https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.14/html-single/install/index#sizing-your-cluster).
 
-_NOTE_: The default deployment of this patterns assumes that none of the components associated with the pattern have been deployed previously. Ensure that your OpenShift environment does not include any of the preceding components.
+>[!WARNING]
+> The default deployment of this patterns assumes that none of the components associated with the pattern have been deployed previously. Ensure that your OpenShift environment does not include any of the preceding components.
+
+>[!WARNING]
+> Since ACM chart provisioning functionality uses `ClusterPools` and these technology is limited to Cloud environments, we do not recommend use those configuration settings.
+> Instead, we have enabled the option to import your existing standalone clusters using the **acm-managed-clusters** chart.
 
 ### Prepare for Deployment
 
