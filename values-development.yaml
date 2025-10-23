@@ -1,0 +1,41 @@
+global:
+  options:
+    useCSV: False
+    syncPolicy: Automatic
+    installPlanApproval: Automatic
+
+clusterGroup:
+  name: devel
+  isHubCluster: false
+  namespaces:
+    - devsecops-ci
+    - devsecops-dev
+    - devsecops-qa
+    - golang-external-secrets
+    - policies
+    - openshift-pipelines
+    - vault
+  subscriptions:
+    openshift-pipelines:
+      name: openshift-pipelines-operator-rh
+      namespace: openshift-operators
+  projects:
+    - dev
+    - eso
+  applications:
+    golang-external-secrets:
+      name: golang-external-secrets
+      namespace: golang-external-secrets
+      project: eso
+      chart: golang-external-secrets
+      chartVersion: 0.1.*
+    vault:
+      name: vault
+      namespace: vault
+      project: dev
+      chart: hashicorp-vault
+      chartVersion: 0.1.*
+      jwt:
+        enabled: false
+  sharedValueFiles:
+    - '/overrides/values-{{ $.Values.global.clusterPlatform }}.yaml'
