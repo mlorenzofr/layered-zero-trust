@@ -224,11 +224,27 @@ clusterGroup:
       helmOverrides:
         - name: clusterGroup.isHubCluster
           value: false
+    clusterSelector:
+      matchLabels:
+        clusterGroup: devel
+      matchExpressions:
+      - key: vendor
+        operator: In
+        values:
+          - OpenShift
     production:
       name: production
       helmOverrides:
         - name: clusterGroup.isHubCluster
           value: false
+    clusterSelector:
+      matchLabels:
+        clusterGroup: production
+      matchExpressions:
+      - key: vendor
+        operator: In
+        values:
+          - OpenShift
     # exampleRegion:
     #   name: group-one
     #   acmlabels:
