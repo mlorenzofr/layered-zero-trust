@@ -231,7 +231,7 @@ clusterGroup:
           - key: vendor
             operator: In
             values:
-              - Openshift
+              - OpenShift
     production:
       name: production
       helmOverrides:
