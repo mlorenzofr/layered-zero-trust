@@ -220,6 +220,9 @@ clusterGroup:
       path: charts/noobaa-mcg
       annotations:
         argocd.argoproj.io/sync-wave: "5"  # Deploy after core services
+      overrides:
+        - name: noobaa.dbSize
+          value: 10Gi
     # Quay Container Registry (uses NooBaa for storage)
     quay-registry:
       name: quay-registry

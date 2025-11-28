@@ -13,3 +13,4 @@ noobaa:
       tiers:
         - backingStores:
             - noobaa-default-backing-store
+  dbSize: 50Gi
