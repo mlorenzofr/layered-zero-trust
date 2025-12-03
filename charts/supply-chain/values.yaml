@@ -1,0 +1,27 @@
+# Default values for qtodo
+global:
+  hubClusterDomain: apps.example.com
+  namespace: pipeline
+  secretStore:
+    name: "vault-backend"
+    kind: "ClusterSecretStore"
+
+quay:
+  enabled: true
+  vaultPath: "secret/data/global/quay-users"
+  url: "quay-registry-quay-quay-enterprise.apps.example.com/qtodo"
+  tag: "latest"
+  tlsVerify: "true"
+
+storage:
+  pvcs:
+    - name: pipeline-pvc
+      storageClass: ""
+      size: "2Gi"
+      accessMode: ReadWriteOnce
+
+qtodo:
+  repository: "https://github.com/validatedpatterns-demos/qtodo.git"
+  revision: "main"
+  image: "quay.io/hybridcloudpatterns/qtodo"
+  tag: "latest"
