@@ -1,0 +1,88 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: qtodo-build-pipeline
+  namespace: {{ .Values.global.namespace }}
+spec:
+  params:
+    - name: git-url
+      type: string
+      description: The URL of the public Github qtodo repository
+      default: {{ .Values.qtodo.repository }}
+    - name: git-revision
+      type: string
+      description: The revision of the public Github qtodo repository
+      default: {{ .Values.qtodo.revision }}
+    - name: image-target
+      type: string
+      description: The full URL for the quay registry image
+      default: "{{ .Values.quay.url }}:{{ .Values.quay.tag }}"
+    - name: image-tls-verify
+      type: string
+      description: Whether to verify TLS
+      default: {{ .Values.quay.tlsVerify }}
+  workspaces:
+    - name: qtodo-source
+      persistentVolumeClaim:
+        claimName: pipeline-pvc
+    - name: quay-credentials
+      optional: true
+      secret:
+        secretName: image-registry-credentials
+  tasks:
+    - name: fetch-qtodo-repository
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: URL
+          value: $(params.git-url)
+        - name: REVISION
+          value: $(params.git-revision)
+      workspaces:
+        - name: output
+          workspace: qtodo-source
+
+    - name: build-qtodo-application
+      runAfter:
+        - fetch-qtodo-repository
+      taskRef:
+        name: qtodo-build-task
+        kind: Task
+      workspaces:
+        - name: source
+          workspace: qtodo-source
+
+    - name: build-qtodo-image
+      runAfter:
+        - build-qtodo-application
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: IMAGE
+          value: $(params.image-target)
+        - name: DOCKERFILE
+          value: ./Containerfile
+        - name: TLS_VERIFY
+          value: $(params.image-tls-verify)
+        - name: FORMAT
+          value: docker
+      workspaces:
+        - name: source
+          workspace: qtodo-source
+        - name: dockerconfig
+          workspace: quay-credentials
