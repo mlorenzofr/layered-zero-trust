@@ -13,6 +13,8 @@ kind: KeycloakRealmImport
 metadata:
   name: "{{ .realm }}-realm-import"
   namespace: "{{ $.Release.Namespace }}"
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   keycloakCRName: keycloak
   realm:
