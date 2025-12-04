@@ -66,6 +66,7 @@ clusterGroup:
         targetNamespace: openshift-compliance
         annotations:
           openshift.io/cluster-monitoring: "true"
+    - openshift-pipelines
   subscriptions:
     acm:
       name: advanced-cluster-management
@@ -77,6 +78,9 @@ clusterGroup:
       namespace: cert-manager-operator
       channel: stable-v1
       catalogSource: redhat-marketplace
+    openshift-pipelines:
+      name: openshift-pipelines-operator-rh
+      namespace: openshift-operators
     rhbk:
       name: rhbk-operator
       namespace: keycloak-system
@@ -358,6 +362,15 @@ clusterGroup:
           value: qtodo
         - name: app.vault.secretPath
           value: secret/data/global/qtodo
+    supply-chain:
+      name: supply-chain
+      project: hub
+      path: charts/supply-chain
+      overrides:
+        - name: quay.tlsVerify
+          value: "false"
+        - name: quay.url
+          value: quay-registry-quay-quay-enterprise.apps.{{ $.Values.global.clusterDomain }}/{{ $.Values.global.clusterGroup.name }}/qtodo
   argoCD:
     resourceHealthChecks:
       - check: |
