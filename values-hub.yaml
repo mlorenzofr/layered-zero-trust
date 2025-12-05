@@ -365,6 +365,27 @@ clusterGroup:
           return hs
         group: k8s.keycloak.org
         kind: KeycloakRealmImport
+    resource:
+      customizations:
+        health:
+          PersistentVolumeClaim: |
+            hs = {}
+            if obj.status ~= nil then
+              if obj.status.phase == "Bound" then
+                hs.status = "Healthy"
+                hs.message = "Volume is bound"
+                return hs
+              end
+              if obj.status.phase == "Pending" then
+                -- Mark Pending as Healthy to unblock the sync
+                hs.status = "Healthy"
+                hs.message = "Pending (Waiting for first consumer)"
+                return hs
+              end
+            end
+            hs.status = "Progressing"
+            hs.message = "Waiting for status"
+            return hs
     resourceExclusions: |
       - apiGroups:
         - internal.open-cluster-management.io
