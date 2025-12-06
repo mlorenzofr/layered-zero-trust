@@ -14,3 +14,12 @@ noobaa:
         - backingStores:
             - noobaa-default-backing-store
   dbSize: 50Gi
+  pvPool:
+    resources:
+      requests:
+        cpu: 800m
+        memory: 800Mi
+        storage: 50Gi
+      limits:
+        cpu: 1000m
+        memory: 4Gi

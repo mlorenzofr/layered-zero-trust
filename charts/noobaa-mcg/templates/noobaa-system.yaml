@@ -12,6 +12,15 @@ spec:
       operator: "Equal"
       value: "true"
       effect: "NoSchedule"
+  pvPool:
+    resources:
+      requests:
+        cpu: {{ .Values.noobaa.pvPool.resources.requests.cpu }}
+        memory: {{ .Values.noobaa.pvPool.resources.requests.memory }}
+        storage: {{ .Values.noobaa.pvPool.resources.requests.storage }}
+      limits:
+        cpu: {{ .Values.noobaa.pvPool.resources.limits.cpu }}
+        memory: {{ .Values.noobaa.pvPool.resources.limits.memory }}
   dbVolumeResources:
     requests:
       storage: {{ .Values.noobaa.dbSize }}
