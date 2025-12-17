@@ -362,6 +362,13 @@ clusterGroup:
       project: hub
       chart: golang-external-secrets
       chartVersion: 0.1.*
+      overrides:
+        - name: caProvider.hostCluster.name
+          value: ztvp-trusted-ca
+        - name: caProvider.hostCluster.key
+          value: tls-ca-bundle.pem
+        - name: caProvider.hostCluster.namespace
+          value: qtodo
     rh-keycloak:
       name: rh-keycloak
       namespace: keycloak-system
