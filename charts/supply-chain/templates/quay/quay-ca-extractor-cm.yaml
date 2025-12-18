@@ -1,0 +1,11 @@
+{{- if eq .Values.quay.enabled true }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quay-ca-extractor-script
+  namespace: {{ .Values.global.namespace }}
+data:
+  quay-ca-extractor.sh: |
+{{- .Files.Get "files/quay-ca-extractor.sh" | nindent 4 }}
+{{- end }}
