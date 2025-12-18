@@ -5,7 +5,7 @@ metadata:
   name: quay-user-provisioner
   namespace: {{ .Values.global.namespace }}
 spec:
-  schedule: {{ .Values.quay.job.schedule | quote }}
+  schedule: {{ .Values.quay.jobs.user.schedule | quote }}
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -15,7 +15,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: quay-user-provisioner
-              image: {{ .Values.quay.job.image }}
+              image: {{ .Values.quay.jobs.user.image }}
               command: ["python3", "/app/create_user.py"]
               env:
                 - name: QUAY_HOST

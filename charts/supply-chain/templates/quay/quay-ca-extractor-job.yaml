@@ -1,0 +1,40 @@
+{{- if eq .Values.quay.enabled true }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quay-ca-extractor
+  namespace: {{ .Values.global.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-8"
+spec:
+  schedule: {{ .Values.quay.jobs.caExtractor.schedule | quote }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.quay.jobs.caExtractor.backoffLimit }}
+      template:
+        spec:
+          restartPolicy: Never
+          serviceAccountName: {{ .Values.quay.jobs.caExtractor.serviceAccountName }}
+          containers:
+            - name: ca-extractor
+              image: {{ .Values.quay.jobs.caExtractor.image }}
+              imagePullPolicy: IfNotPresent
+              resources:
+                {{- toYaml .Values.quay.jobs.caExtractor.resources | nindent 16 }}
+              env:
+                - name: REGISTRY_HOST
+                  value: {{ .Values.registry.domain | default (printf "quay-registry-quay-quay-enterprise.%s" .Values.global.hubClusterDomain) }}
+                - name: CM_NAME
+                  value: quay-ca-extractor-script
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+              command: ["/bin/bash", "-c", "/scripts/quay-ca-extractor.sh"]
+          volumes:
+            - name: script
+              configMap:
+                name: quay-ca-extractor-script
+                defaultMode: 0755
+{{- end }}

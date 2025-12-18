@@ -31,9 +31,22 @@ qtodo:
 quay:
   enabled: true
   email: "quay-user@example.com"
-  job:
-    image: registry.access.redhat.com/ubi9/ubi:9.7-1764794285
-    schedule: "*/5 * * * *"
+  jobs:
+    user:
+      image: registry.access.redhat.com/ubi9/ubi:9.7-1764794285
+      schedule: "*/5 * * * *"
+    caExtractor:
+      backoffLimit: 3
+      image: registry.redhat.io/openshift4/ose-cli:latest
+      schedule: "*/5 * * * *"
+      serviceAccountName: quay-ca-extractor
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
 
 # container registry configuration
 registry:
