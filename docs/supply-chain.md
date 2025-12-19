@@ -20,6 +20,200 @@ In our demo, we will use a number of additional ZTVP components. These component
 * [Multicloud Object Gateway](https://docs.redhat.com/en/documentation/red_hat_openshift_container_storage/4.8/html/managing_hybrid_and_multicloud_resources/index) is a data service for OpenShift that provides an S3-compatible object storage. In our case, this component is necessary to provide a storage system to Quay.
 * [Red Hat OpenShift Pipelines](https://docs.redhat.com/en/documentation/red_hat_openshift_pipelines/1.20) is a cloud-native CI/CD solution built on the Tekton framework. We will use this product to automate our secure supply chain process, but you could use your own CI/CD solution if one exists.
 
+### Setting up the values
+
+We've seen the components we'll use in this use case. To configure them, we must add (uncomment) these parameters to the `values-hub.yaml` file
+
+* `clustergroup.namespaces`. Create the namespaces for the components.
+
+    ```shell
+    - openshift-storage:
+        operatorGroup: true
+        targetNamespace: openshift-storage
+        annotations:
+          openshift.io/cluster-monitoring: "true"
+          argocd.argoproj.io/sync-wave: "-5"  # Propagated to OperatorGroup by framework
+    - quay-enterprise:
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"  # Create before NooBaa and all Quay components
+        labels:
+          openshift.io/cluster-monitoring: "true"
+    - trusted-artifact-signer:
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"  # Auto-created by RHTAS operator
+        labels:
+          openshift.io/cluster-monitoring: "true"
+    - rhtpa-operator:
+        operatorGroup: true
+        targetNamespace: rhtpa-operator
+        annotations:
+          argocd.argoproj.io/sync-wave: "-5"  # Create before operator subscription
+    - trusted-profile-analyzer:
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"  # Create before RHTPA components
+        labels:
+          openshift.io/cluster-monitoring: "true"
+    - openshift-pipelines
+    ```
+
+* `clusterGroup.subscriptions`. Create the subscriptions for the components operators.
+
+    ```shell
+    openshift-pipelines:
+      name: openshift-pipelines-operator-rh
+      namespace: openshift-operators
+    odf:
+      name: odf-operator
+      namespace: openshift-storage
+      channel: stable-4.20
+      annotations:
+        argocd.argoproj.io/sync-wave: "-4"  # Install after OperatorGroup (-5)
+    quay-operator:
+      name: quay-operator
+      namespace: openshift-operators
+      channel: stable-3.15
+      annotations:
+        argocd.argoproj.io/sync-wave: "-3"  # Install after ODF operator
+    rhtas-operator:
+      name: rhtas-operator
+      namespace: openshift-operators
+      channel: stable
+      annotations:
+        argocd.argoproj.io/sync-wave: "-2"  # Install after Quay operator, before applications
+      catalogSource: redhat-operators
+    rhtpa-operator:
+      name: rhtpa-operator
+      namespace: rhtpa-operator  # MUST use dedicated namespace (not openshift-operators)
+      channel: stable-v1.1  # Use stable-v1.1 channel for 1.1.x updates
+      catalogSource: redhat-operators
+      annotations:
+        argocd.argoproj.io/sync-wave: "-4"  # Install after OperatorGroup (-5), before applications
+    ```
+
+* `applications`: Configure the applications.
+
+    ```shell
+    noobaa-mcg:
+      name: noobaa-mcg
+      namespace: openshift-storage
+      project: hub
+      path: charts/noobaa-mcg
+      annotations:
+        argocd.argoproj.io/sync-wave: "5"  # Deploy after core services
+    quay-registry:
+      name: quay-registry
+      namespace: quay-enterprise
+      project: hub
+      path: charts/quay-registry
+      annotations:
+        argocd.argoproj.io/sync-wave: "10"  # Deploy after NooBaa storage backend
+    trusted-artifact-signer:
+      name: trusted-artifact-signer
+      namespace: trusted-artifact-signer
+      project: hub
+      path: charts/rhtas-operator
+      annotations:
+        argocd.argoproj.io/sync-wave: "15"  # Deploy after dependencies
+      overrides:
+        # OIDC Issuer Configuration - Both can be enabled simultaneously
+        # Enable SPIFFE issuer for workload identity
+        - name: rhtas.zeroTrust.spire.enabled
+          value: "true"
+        - name: rhtas.zeroTrust.spire.trustDomain
+          value: "apps.{{ $.Values.global.clusterDomain }}"
+        - name: rhtas.zeroTrust.spire.issuer
+          value: "https://spire-spiffe-oidc-discovery-provider.apps.{{ $.Values.global.clusterDomain }}"
+        # Enable Keycloak issuer for user/email authentication
+        - name: rhtas.zeroTrust.email.enabled
+          value: "true"
+        - name: rhtas.zeroTrust.email.issuer
+          value: https://keycloak.apps.{{ $.Values.global.clusterDomain }}/realms/ztvp
+    trusted-profile-analyzer:
+      name: trusted-profile-analyzer
+      namespace: trusted-profile-analyzer
+      project: hub
+      path: charts/rhtpa-operator
+      annotations:
+        argocd.argoproj.io/sync-wave: "10"  # Create chart resources (OBC, DB, etc.)
+        # Note: The TrustedProfileAnalyzer CR is created by ACM Policy at wave 50
+        # to ensure the operator is fully ready (mitigates v1.1.0 initialization bug)
+      # Ignore differences to prevent OutOfSync status
+      ignoreDifferences:
+        # Ignore Job status changes (completion, failure counts, conditions)
+        # Jobs are created by hooks and their status changes don't require re-sync
+        - group: batch
+          kind: Job
+          jsonPointers:
+            - /status
+      overrides:
+        # Vault Integration
+        - name: rhtpa.zeroTrust.vault.url
+          value: https://vault.vault.svc.cluster.local:8200
+        - name: rhtpa.modules.createImporters.importers.cve.cve.disabled
+          value: "false"
+        - name: rhtpa.modules.createImporters.importers.osv-github.osv.disabled
+          value: "false"
+        # Additional importers (disabled by default due to large datasets)
+        - name: rhtpa.modules.createImporters.importers.redhat-csaf.csaf.disabled
+          value: "false"
+        - name: rhtpa.modules.createImporters.importers.quay-redhat-user-workloads.quay.disabled
+          value: "false"
+        - name: rhtpa.modules.createImporters.importers.redhat-sboms.sbom.disabled
+          value: "false"
+    supply-chain:
+      name: supply-chain
+      project: hub
+      path: charts/supply-chain
+      ignoreDifferences:
+        - group: ""
+          kind: ServiceAccount
+          jqPathExpressions:
+            - .imagePullSecrets[]|select(.name | contains("-dockercfg-"))
+      overrides:
+        # Don't forget to uncomment the RHTAS and RHTPA components in this same file
+        - name: rhtas.enabled
+          value: true
+        - name: rhtpa.enabled
+          value: true
+        - name: registry.tlsVerify
+          value: "false"
+        - name: registry.user
+          value: quay-admin
+        - name: registry.passwordVaultKey
+          value: quay-admin-password
+    ```
+
+* `applications.vault.jwt.roles.policies`: In the **Vault** polices, add the policy **rhtpa**.
+
+    ```shell
+          - name: rhtpa
+            audience: rhtpa
+            subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/trusted-profile-analyzer/sa/rhtpa
+            policies:
+              - global-secret
+    ```
+
+* `applications.qtodo.overrides`: Configure **qtodo** to use the Quay registry.
+
+    ```shell
+        - name: app.images.main.name
+          value: quay-registry-quay-quay-enterprise.apps.{{ $.Values.global.clusterDomain }}/ztvp/qtodo
+        - name: app.images.main.version
+          value: latest
+        - name: app.images.main.registry.auth
+          value: true
+        - name: app.images.main.registry.user
+          value: quay-admin
+        - name: app.images.main.registry.passwordVaultKey
+          value: quay-admin-password
+    ```
+
+You can apply this changes to your configuration using [this patch file](./values-patches/supply-chain.patch):
+
+```shell
+git apply docs/values-patches/supply-chain.patch
+```
+
 ## Automatic approach
 
 To automate the application building and certifying process, we will use _Red Hat OpenShift Pipelines_.
