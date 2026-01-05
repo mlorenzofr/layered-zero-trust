@@ -24,7 +24,7 @@ In our demo, we will use a number of additional ZTVP components. These component
 
 We've seen the components we'll use in this use case. To configure them, we must add (uncomment) these parameters to the `values-hub.yaml` file
 
-* `clustergroup.namespaces`. Create the namespaces for the components.
+* In the `clustergroup.namespaces` section, create the namespaces for the components by uncommenting the following
 
     ```shell
     - openshift-storage:
