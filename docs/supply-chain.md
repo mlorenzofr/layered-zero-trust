@@ -22,7 +22,7 @@ In our demo, we will use a number of additional ZTVP components. These component
 
 ### Setting up the values
 
-We've seen the components we'll use in this use case. To configure them, we must add (uncomment) these parameters to the `values-hub.yaml` file
+We've seen the components we'll use in this use case. To configure them, we must add (uncomment) these parameters to the [values-hub.yaml](../values-hub.yaml) file
 
 * In the `clustergroup.namespaces` section, create the namespaces for the components by uncommenting the following
 
