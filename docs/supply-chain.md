@@ -193,7 +193,7 @@ We've seen the components we'll use in this use case. To configure them, we must
               - global-secret
     ```
 
-* `applications.qtodo.overrides`: Configure **qtodo** to use the Quay registry.
+* `applications.qtodo.overrides`: In the **qtodo** overrides section, specify the following to source content from the Quay registry instance.
 
     ```shell
         - name: app.images.main.name
