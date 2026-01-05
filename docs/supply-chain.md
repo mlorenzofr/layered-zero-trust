@@ -208,7 +208,7 @@ We've seen the components we'll use in this use case. To configure them, we must
           value: quay-admin-password
     ```
 
-You can apply this changes to your configuration using [this patch file](./values-patches/supply-chain.patch):
+The proceeding changes can also be configured by applying [this patch file](./values-patches/supply-chain.patch):
 
 ```shell
 git apply docs/values-patches/supply-chain.patch
