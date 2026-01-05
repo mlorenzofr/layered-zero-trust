@@ -56,7 +56,7 @@ We've seen the components we'll use in this use case. To configure them, we must
     - openshift-pipelines
     ```
 
-* `clusterGroup.subscriptions`. Create the subscriptions for the components operators.
+* In the `clusterGroup.subscriptions` section, create the subscriptions for the components operators by uncommenting the following:
 
     ```shell
     openshift-pipelines:
