@@ -183,7 +183,7 @@ We've seen the components we'll use in this use case. To configure them, we must
           value: quay-admin-password
     ```
 
-* `applications.vault.jwt.roles.policies`: In the **Vault** polices, add the policy **rhtpa**.
+* `applications.vault.jwt.roles.policies`: In the **Vault** policies section, uncomment the following:
 
     ```shell
           - name: rhtpa
