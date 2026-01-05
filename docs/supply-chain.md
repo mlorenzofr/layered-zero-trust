@@ -90,7 +90,7 @@ We've seen the components we'll use in this use case. To configure them, we must
         argocd.argoproj.io/sync-wave: "-4"  # Install after OperatorGroup (-5), before applications
     ```
 
-* `applications`: Configure the applications.
+* `Configure the Argo CD applications`:
 
     ```shell
     noobaa-mcg:
