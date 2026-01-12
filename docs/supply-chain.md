@@ -183,7 +183,7 @@ To enable this use case, the following parameters should be defined within the [
           value: quay-admin-password
     ```
 
-* `applications.vault.jwt.roles.policies`: In the **Vault** policies section, uncomment the following:
+* `applications.vault.jwt.roles.policies`: In the _Vault_ policies section, uncomment the following:
 
     ```shell
           - name: rhtpa
