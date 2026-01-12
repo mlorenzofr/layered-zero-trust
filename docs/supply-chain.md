@@ -193,7 +193,7 @@ To enable this use case, the following parameters should be defined within the [
               - global-secret
     ```
 
-* `applications.qtodo.overrides`: In the **qtodo** overrides section, specify the following to source content from the Quay registry instance.
+* `applications.qtodo.overrides`: In the _qtodo_ overrides section, specify the following to source content from the Quay registry instance.
 
     ```shell
         - name: app.images.main.name
