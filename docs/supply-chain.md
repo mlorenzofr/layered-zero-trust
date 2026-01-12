@@ -20,7 +20,7 @@ In our demo, we will use a number of additional ZTVP components. These component
 * [Multicloud Object Gateway](https://docs.redhat.com/en/documentation/red_hat_openshift_container_storage/4.8/html/managing_hybrid_and_multicloud_resources/index) is a data service for OpenShift that provides an S3-compatible object storage. In our case, this component is necessary to provide a storage system to Quay.
 * [Red Hat OpenShift Pipelines](https://docs.redhat.com/en/documentation/red_hat_openshift_pipelines/1.20) is a cloud-native CI/CD solution built on the Tekton framework. We will use this product to automate our secure supply chain process, but you could use your own CI/CD solution if one exists.
 
-### Setting up the values
+### Defining the values
 
 We've seen the components we'll use in this use case. To configure them, we must add (uncomment) these parameters to the [values-hub.yaml](../values-hub.yaml) file
 
