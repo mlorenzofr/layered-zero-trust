@@ -214,6 +214,18 @@ To simplify setting the appropriate values for this use case, [this Git patch fi
 git apply docs/values-patches/supply-chain.patch
 ```
 
+> [!NOTE]
+> Ensure you commit the applied changes to a feature branch and push that branch to your remote Git repository.
+>
+> For example:
+>
+> ```shell
+> git checkout -b supply-chain-setup
+> git add .
+> git commit -m "Apply supply chain configuration patch"
+> git push origin supply-chain-setup
+> ```
+
 ## Automated Secure Supply Chain Pipeline
 
 To automate the application building and certifying process, we will use _Red Hat OpenShift Pipelines_.
