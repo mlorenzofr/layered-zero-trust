@@ -208,7 +208,7 @@ To enable this use case, the following parameters should be defined within the [
           value: quay-admin-password
     ```
 
-The proceeding changes can also be configured by applying [this patch file](./values-patches/supply-chain.patch):
+To simplify setting the appropriate values for this use case, [this Git patch file](./values-patches/supply-chain.patch) can be used to automate applying the desired configurations by executing the following command from the root of the repository:
 
 ```shell
 git apply docs/values-patches/supply-chain.patch
