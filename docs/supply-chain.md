@@ -214,7 +214,7 @@ To simplify setting the appropriate values for this use case, [this Git patch fi
 git apply docs/values-patches/supply-chain.patch
 ```
 
-## Automatic approach
+## Automated Secure Supply Chain Pipeline
 
 To automate the application building and certifying process, we will use _Red Hat OpenShift Pipelines_.
 
