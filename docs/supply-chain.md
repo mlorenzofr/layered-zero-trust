@@ -56,7 +56,7 @@ To enable this use case, the following parameters should be defined within the [
     - openshift-pipelines
     ```
 
-* In the `clusterGroup.subscriptions` section, create the subscriptions for the components operators by uncommenting the following:
+* In the `clusterGroup.subscriptions` section, create the _Subscriptions_ for the components operators by uncommenting the following:
 
     ```shell
     openshift-pipelines:
