@@ -1,5 +1,5 @@
 diff --git a/values-hub.yaml b/values-hub.yaml
-index 65b3645..05d25ea 100644
+index b8da45d..e13d31b 100644
 --- a/values-hub.yaml
 +++ b/values-hub.yaml
 @@ -28,34 +28,34 @@ clusterGroup:
@@ -149,20 +149,31 @@ index 65b3645..05d25ea 100644
    projects:
      - hub
    # Explicitly mention the cluster-state based overrides we plan to use for this pattern.
-@@ -212,103 +212,104 @@ clusterGroup:
+@@ -301,109 +301,109 @@ clusterGroup:
              policies:
-               - global-secret
+               - apps-qtodo-jwt-secret
            # RHTPA vault role
 -          # - name: rhtpa
 -          #   audience: rhtpa
 -          #   subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/trusted-profile-analyzer/sa/rhtpa
 -          #   policies:
--          #     - global-secret
+-          #     - hub-infra-rhtpa-jwt-secret
 +          - name: rhtpa
 +            audience: rhtpa
 +            subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/trusted-profile-analyzer/sa/rhtpa
 +            policies:
-+              - global-secret
++              - hub-infra-rhtpa-jwt-secret
+           # Supply chain vault role (for Tekton pipelines)
+-          # - name: supply-chain
+-          #   audience: supply-chain
+-          #   subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/pipeline/sa/pipeline
+-          #   policies:
+-          #     - hub-supply-chain-jwt-secret
++          - name: supply-chain
++            audience: supply-chain
++            subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/pipeline/sa/pipeline
++            policies:
++              - hub-supply-chain-jwt-secret
      # Shared Object Storage Backend
      # Required for RHTPA and QUAY (provides S3-compatible storage via NooBaa MCG)
      # NooBaa MCG provides S3-compatible object storage for multiple applications
@@ -338,13 +349,12 @@ index 65b3645..05d25ea 100644
 +          value: "false"
 +        - name: rhtpa.modules.createImporters.importers.redhat-sboms.sbom.disabled
 +          value: "false"
-+    # COMMENTED OUT - Uncomment to enable RHTPA
      golang-external-secrets:
        name: golang-external-secrets
        namespace: golang-external-secrets
-@@ -350,39 +351,39 @@ clusterGroup:
+@@ -450,39 +450,39 @@ clusterGroup:
          - name: app.vault.secretPath
-           value: secret/data/global/qtodo
+           value: secret/data/apps/qtodo/qtodo-db
          # For Secure Supply Chain, we changed the qtodo image to use the one built in the secure supply chain
 -        # - name: app.images.main.name
 -        #   value: quay-registry-quay-quay-enterprise.apps.{{ $.Values.global.clusterDomain }}/ztvp/qtodo
@@ -364,9 +374,9 @@ index 65b3645..05d25ea 100644
 +        - name: app.images.main.registry.auth
 +          value: true
 +        - name: app.images.main.registry.user
-+          value: quay-admin
++          value: quay-user
 +        - name: app.images.main.registry.passwordVaultKey
-+          value: quay-admin-password
++          value: quay-user-password
      # Secure Supply Chain - Uncomment to enable
 -    # supply-chain:
 -    #  name: supply-chain
@@ -407,9 +417,9 @@ index 65b3645..05d25ea 100644
 +        - name: registry.tlsVerify
 +          value: "false"
 +        - name: registry.user
-+          value: quay-admin
++          value: quay-user
 +        - name: registry.passwordVaultKey
-+          value: quay-admin-password
++          value: quay-user-password
    argoCD:
      resourceHealthChecks:
        - check: |
