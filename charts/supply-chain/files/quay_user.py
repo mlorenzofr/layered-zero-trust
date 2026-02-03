@@ -100,7 +100,7 @@ def create_org():
     try:
         log(f"Creating Organization '{ORGANIZATION}'...")
 
-        url = f"/organization/{ORGANIZATION}"
+        url = f"/organization/"
         payload = json.dumps(
             {
                 "name": ORGANIZATION,
