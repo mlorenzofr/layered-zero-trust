@@ -71,6 +71,28 @@ def api_call(url, method="GET", data=None, headers=None):
     return None
 
 
+def login():
+    """Login to prime the session cookies"""
+    log(f"Logging in as '{USERNAME}'...")
+
+    url = f"{BASE_URL}/api/v1/signin"
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": get_csrf_token(),
+    }
+
+    payload = json.dumps({"username": USERNAME, "password": PASSWORD}).encode("utf-8")
+
+    req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
+    try:
+        opener.open(req)
+        log("Login successful.")
+    except Exception as e:
+        log(f"Login failed: {e}")
+        sys.exit(1)
+
+
 def wait_for_quay():
     """Loop until Quay health endpoint returns 200"""
     url = f"{BASE_URL}/health/instance"
@@ -100,7 +122,7 @@ def create_org():
     try:
         log(f"Creating Organization '{ORGANIZATION}'...")
 
-        url = f"/organization/"
+        url = "/organization/"
         payload = json.dumps(
             {
                 "name": ORGANIZATION,
@@ -243,6 +265,8 @@ if __name__ == "__main__":
     while not create_user():
         log("Retrying user creation in 10s...")
         time.sleep(10)
+
+    login()
 
     while not create_org():
         log("Retrying organization creation in 10s...")
