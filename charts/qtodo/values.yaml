@@ -47,12 +47,6 @@ app:
       enabled: true
       jwtTokenPath: "/svids/jwt.token"
 
-  # Keycloak realm configuration
-  keycloak:
-    realm: "ztvp"
-    # Keycloak realm URL (auto-generated from global.localClusterDomain and realm if empty)
-    realmUrl: ""
-
   spire:
     enabled: true   # Enable SPIFFE + OIDC integration by default
     sidecars: true
