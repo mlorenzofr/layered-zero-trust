@@ -45,28 +45,14 @@ spec:
 {{- $template = replace "TLS_CONFIG" "" $template }}
 {{- end }}
 {{- /* OIDC Config */ -}}
-{{- if and .Values.rhtpa.zeroTrust .Values.rhtpa.zeroTrust.keycloak .Values.rhtpa.zeroTrust.keycloak.enabled }}
-{{- /* Construct Keycloak URL from global.localClusterDomain if not provided */ -}}
-{{- $keycloakUrl := .Values.rhtpa.zeroTrust.keycloak.url }}
-{{- if not $keycloakUrl }}
-{{- $keycloakUrl = printf "https://keycloak.%s" .Values.global.localClusterDomain }}
-{{- end }}
-{{- $oidcConfig := printf `oidc:
-        clients:
-          frontend:
-            clientId: %s
-            issuerUrl: %s/realms/%s
-          cli:
-            clientId: %s
-            issuerUrl: %s/realms/%s
-            clientSecret:
-              valueFrom:
-                secretKeyRef:
-                  name: %s
-                  key: client-secret` .Values.rhtpa.zeroTrust.keycloak.clients.frontend.clientId $keycloakUrl .Values.rhtpa.zeroTrust.keycloak.realm .Values.rhtpa.zeroTrust.keycloak.clients.cli.clientId $keycloakUrl .Values.rhtpa.zeroTrust.keycloak.realm .Values.rhtpa.zeroTrust.keycloak.clients.cli.secretName }}
+{{- if and .Values.rhtpa.zeroTrust .Values.rhtpa.zeroTrust.oidc .Values.rhtpa.zeroTrust.oidc.enabled }}
+{{- $oidcConfig := include "rhtpa-operator.oidc.config" . }}
 {{- $template = replace "OIDC_CONFIG" $oidcConfig $template }}
+{{- $authenticatorConfig := include "rhtpa-operator.authenticator.config" . }}
+{{- $template = replace "AUTHENTICATOR_CONFIG" $authenticatorConfig $template }}
 {{- else }}
 {{- $template = replace "OIDC_CONFIG" "" $template }}
+{{- $template = replace "AUTHENTICATOR_CONFIG" "" $template }}
 {{- end }}
 {{- /* Modules Config */ -}}
 {{- if and .Values.rhtpa.modules .Values.rhtpa.modules.createImporters .Values.rhtpa.modules.createImporters.enabled }}

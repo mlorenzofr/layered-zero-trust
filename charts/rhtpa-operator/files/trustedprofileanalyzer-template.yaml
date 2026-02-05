@@ -16,6 +16,7 @@
       appDomain: "APP_DOMAIN"
       TLS_CONFIG
       OIDC_CONFIG
+      AUTHENTICATOR_CONFIG
       createDatabase:
         name: DATABASE_NAME
         username: rhtpa
