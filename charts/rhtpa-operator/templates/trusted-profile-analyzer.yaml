@@ -45,25 +45,25 @@ spec:
 {{- $template = replace "TLS_CONFIG" "" $template }}
 {{- end }}
 {{- /* OIDC Config */ -}}
-{{- if and .Values.rhtpa.zeroTrust .Values.rhtpa.zeroTrust.keycloak .Values.rhtpa.zeroTrust.keycloak.enabled }}
-{{- /* Construct Keycloak URL from global.localClusterDomain if not provided */ -}}
-{{- $keycloakUrl := .Values.rhtpa.zeroTrust.keycloak.url }}
-{{- if not $keycloakUrl }}
-{{- $keycloakUrl = printf "https://keycloak.%s" .Values.global.localClusterDomain }}
+{{- if and .Values.rhtpa.zeroTrust .Values.rhtpa.zeroTrust.oidc .Values.rhtpa.zeroTrust.oidc.enabled }}
+{{- /* Construct OIDC authentication URL from global.localClusterDomain if not provided */ -}}
+{{- $authServerUrl := .Values.rhtpa.zeroTrust.oidc.authServerUrl }}
+{{- if not $authServerUrl }}
+{{- $authServerUrl = printf "https://keycloak.%s/realms/%s" .Values.global.localClusterDomain .Values.rhtpa.zeroTrust.oidc.realm }}
 {{- end }}
 {{- $oidcConfig := printf `oidc:
         clients:
           frontend:
             clientId: %s
-            issuerUrl: %s/realms/%s
+            issuerUrl: %s
           cli:
             clientId: %s
-            issuerUrl: %s/realms/%s
+            issuerUrl: %s
             clientSecret:
               valueFrom:
                 secretKeyRef:
                   name: %s
-                  key: client-secret` .Values.rhtpa.zeroTrust.keycloak.clients.frontend.clientId $keycloakUrl .Values.rhtpa.zeroTrust.keycloak.realm .Values.rhtpa.zeroTrust.keycloak.clients.cli.clientId $keycloakUrl .Values.rhtpa.zeroTrust.keycloak.realm .Values.rhtpa.zeroTrust.keycloak.clients.cli.secretName }}
+                  key: client-secret` .Values.rhtpa.zeroTrust.oidc.clients.frontend.clientId $authServerUrl .Values.rhtpa.zeroTrust.oidc.clients.cli.clientId $authServerUrl .Values.rhtpa.zeroTrust.oidc.clients.cli.secretName }}
 {{- $template = replace "OIDC_CONFIG" $oidcConfig $template }}
 {{- else }}
 {{- $template = replace "OIDC_CONFIG" "" $template }}

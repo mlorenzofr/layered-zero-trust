@@ -43,10 +43,6 @@ app:
     authenticatedPaths: "/*"
     authenticatedPolicy: "authenticated"
 
-  # Keycloak realm configuration
-  keycloak:
-    realm: "ztvp"
-
   spire:
     enabled: true   # Enable SPIFFE + OIDC integration by default
     sidecars: true

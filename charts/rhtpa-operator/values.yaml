@@ -28,10 +28,10 @@ rhtpa:
       policy: "rhtpa-secrets"
       # RHTPA DB password path (infra)
       secretPath: "secret/data/hub/infra/rhtpa/rhtpa-db"
-    keycloak:
+    oidc:
       enabled: true
-      url: ""  # Constructed dynamically from global.localClusterDomain in templates
-      realm: "ztvp"
+      authServerUrl: ""  # Constructed dynamically from global.localClusterDomain in templates
+      realm: "ztvp"  # Used to construct the authentication URL if authServerUrl is not provided
       namespace: "keycloak-system"  # Namespace where Keycloak is deployed
       instanceName: "keycloak"  # Name of the Keycloak CR
       # User credentials - stored in infra users path

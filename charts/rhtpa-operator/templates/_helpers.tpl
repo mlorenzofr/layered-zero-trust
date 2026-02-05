@@ -49,12 +49,16 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Generate the Keycloak OIDC Issuer URL
+Generate the OIDC Issuer URL
 This evaluates any template variables (like {{ $.Values.global.clusterDomain }})
 and appends the realm name.
 */}}
-{{- define "rhtpa-operator.keycloakOIDCIssuer" -}}
-{{- $keycloakUrl := tpl .Values.rhtpa.zeroTrust.keycloak.url . -}}
-{{- printf "%s/realms/%s" $keycloakUrl .Values.rhtpa.zeroTrust.keycloak.realm -}}
+{{- define "rhtpa-operator.OIDCIssuer" -}}
+{{- if not .Values.rhtpa.zeroTrust.oidc.authServerUrl }}
+{{- $authServerUrl := tpl .Values.rhtpa.zeroTrust.oidc.authServerUrl . -}}
+{{- printf "%s/realms/%s" $authServerUrl .Values.rhtpa.zeroTrust.oidc.realm -}}
+{{- else }}
+{{- printf "%s" .Values.rhtpa.zeroTrust.oidc.authServerUrl -}}
+{{- end }}
 {{- end }}
 
