@@ -286,6 +286,9 @@ clusterGroup:
             path "secret/data/hub/infra/quay/*" {
               capabilities = ["read"]
             }
+            path "secret/data/hub/infra/registry/*" {
+              capabilities = ["read"]
+            }
             path "secret/data/hub/infra/rhtpa/rhtpa-oidc-cli" {
               capabilities = ["read"]
             }
@@ -434,8 +437,7 @@ clusterGroup:
       project: hub
       path: charts/qtodo
       ignoreDifferences:
-        - group: ""
-          kind: ServiceAccount
+        - kind: ServiceAccount
           jqPathExpressions:
             - .imagePullSecrets[]|select(.name | contains("-dockercfg-"))
       overrides:
@@ -463,26 +465,61 @@ clusterGroup:
         #   value: quay-user-password
     # Secure Supply Chain - Uncomment to enable
     # supply-chain:
-    #  name: supply-chain
-    #  project: hub
-    #  path: charts/supply-chain
-    #  ignoreDifferences:
-    #    - group: ""
-    #      kind: ServiceAccount
-    #      jqPathExpressions:
-    #        - .imagePullSecrets[]|select(.name | contains("-dockercfg-"))
-    #  overrides:
-    #    # Don't forget to uncomment the RHTAS and RHTPA components in this same file
-    #    - name: rhtas.enabled
-    #      value: true
-    #    - name: rhtpa.enabled
-    #      value: true
-    #    - name: registry.tlsVerify
-    #      value: "false"
-    #    - name: registry.user
-    #      value: quay-admin
-    #    - name: registry.passwordVaultKey
-    #      value: quay-admin-password
+    #   name: supply-chain
+    #   project: hub
+    #   path: charts/supply-chain
+    #   ignoreDifferences:
+    #     - kind: ServiceAccount
+    #       jqPathExpressions:
+    #         - .imagePullSecrets[]|select(.name | contains("-dockercfg-"))
+    #   overrides:
+    #     # ============================================================
+    #     # OPTION 1: Built-in Quay Registry
+    #     # Requires: quay-enterprise namespace, quay-operator, quay-registry app
+    #     # Note: registry.domain is auto-constructed from hubClusterDomain
+    #     # ============================================================
+    #     # - name: quay.enabled
+    #     #   value: "true"
+    #     # - name: externalRegistry.enabled
+    #     #   value: "false"
+    #     # - name: registry.tlsVerify
+    #     #   value: "false"
+    #     # - name: registry.user
+    #     #   value: quay-user
+    #     # ============================================================
+    #     # OPTION 2: BYO/External Registry
+    #     # Requires: registry credentials in ~/values-secret.yaml
+    #     # Note: registry.domain is REQUIRED for external registry
+    #     # ============================================================
+    #     # - name: quay.enabled
+    #     #   value: "false"
+    #     # - name: externalRegistry.enabled
+    #     #   value: "true"
+    #     # - name: registry.domain
+    #     #   value: quay.io
+    #     # - name: registry.org
+    #     #   value: your-org
+    #     # - name: registry.user
+    #     #   value: your-username
+    #     # ============================================================
+    #     # OPTION 3: Embedded OCP Registry (comment out Option 1, 2; uncomment below)
+    #     # ============================================================
+    #     # - name: registry.domain
+    #     #   value: default-route-openshift-image-registry.apps.<your-apps-domain>
+    #     # - name: registry.org
+    #     #   value: ztvp
+    #     # - name: registry.user
+    #     #   value: admin
+    #     # Embedded OCP registry only: create image namespace and grant pipeline push (transparent)
+    #     # - name: registry.embeddedOCP.ensureImageNamespaceRBAC
+    #     #   value: "true"
+    #     # ============================================================
+    #     # Enable RHTAS signing
+    #     # - name: rhtas.enabled
+    #     #   value: "true"
+    #     # Enable RHTPA SBOM upload
+    #     # - name: rhtpa.enabled
+    #     #   value: "true"
   argoCD:
     resourceHealthChecks:
       - check: |
