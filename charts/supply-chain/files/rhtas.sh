@@ -88,11 +88,26 @@ sign_artifact() {
   log_msg "REKOR_URL: ${REKOR_URL}"
   log_msg "bundle: ${bundle}"
 
-  cosign sign-blob "${1}" \
-    --fulcio-url "${FULCIO_URL}" \
-    --rekor-url "${REKOR_URL}" \
-    --bundle "${bundle}" \
-    --yes
+  if [ -f "${OIDC_CLIENT_SECRET_FILE}" ]; then
+    log_msg "OIDC_ISSUER: ${OIDC_ISSUER}"
+    log_msg "OIDC_IDENTITY: ${OIDC_IDENTITY}"
+    log_msg "OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}"
+    log_msg "OIDC_CLIENT_SECRET_FILE: ${OIDC_CLIENT_SECRET_FILE}"
+
+    cosign sign-blob "${1}" \
+      --fulcio-url "${FULCIO_URL}" \
+      --rekor-url "${REKOR_URL}" \
+      --bundle "${bundle}" \
+      --oidc-client-id "${OIDC_CLIENT_ID}" \
+      --oidc-client-secret-file "${OIDC_CLIENT_SECRET_FILE}" \
+      --yes
+  else
+    cosign sign-blob "${1}" \
+      --fulcio-url "${FULCIO_URL}" \
+      --rekor-url "${REKOR_URL}" \
+      --bundle "${bundle}" \
+      --yes
+  fi
 }
 
 # Sign the image
@@ -107,10 +122,24 @@ sign_image() {
   log_msg "REKOR_URL: ${REKOR_URL}"
   log_msg "image_ref: ${image_ref}"
 
-  cosign sign "${image_ref}" \
-    --fulcio-url "${FULCIO_URL}" \
-    --rekor-url "${REKOR_URL}" \
-    --yes
+  if [ -f "${OIDC_CLIENT_SECRET_FILE}" ]; then
+    log_msg "OIDC_ISSUER: ${OIDC_ISSUER}"
+    log_msg "OIDC_IDENTITY: ${OIDC_IDENTITY}"
+    log_msg "OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}"
+    log_msg "OIDC_CLIENT_SECRET_FILE: ${OIDC_CLIENT_SECRET_FILE}"
+
+    cosign sign "${image_ref}" \
+      --fulcio-url "${FULCIO_URL}" \
+      --rekor-url "${REKOR_URL}" \
+      --oidc-client-id "${OIDC_CLIENT_ID}" \
+      --oidc-client-secret-file "${OIDC_CLIENT_SECRET_FILE}" \
+      --yes
+  else
+    cosign sign "${image_ref}" \
+      --fulcio-url "${FULCIO_URL}" \
+      --rekor-url "${REKOR_URL}" \
+      --yes
+  fi
 }
 
 # Verify the SBOM of the image

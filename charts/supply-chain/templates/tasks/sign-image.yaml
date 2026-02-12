@@ -26,6 +26,17 @@ spec:
     - description: Cosign CLI server URL
       name: cli-server-url
       type: string
+{{- if eq .Values.rhtas.oidc.enabled true }}
+    - description: OIDC identity to use for signing
+      name: oidc-identity
+      type: string
+    - description: OIDC issuer to use for signing
+      name: oidc-issuer
+      type: string
+    - description: RHTAS OIDC client ID
+      name: rhtas-oidc-client-id
+      type: string
+{{- end }}
 
   volumes:
     - name: spiffe-workload-api
@@ -36,6 +47,12 @@ spec:
       configMap:
         name: rhtas-functions
         defaultMode: 0755
+{{- if eq .Values.rhtas.oidc.enabled true }}
+    - name: rhtas-oidc-client-secret
+      secret:
+        secretName: {{ .Values.rhtas.oidc.clientSecretName }}
+        defaultMode: 0400
+{{- end }}
 
   steps:
     - image: {{ .Values.tasks.images.cosign }}
@@ -54,6 +71,16 @@ spec:
           value: $(params.rekor-url)
         - name: CA_FILE
           value: $(params.ca-file)
+{{- if eq .Values.rhtas.oidc.enabled true }}
+        - name: OIDC_IDENTITY
+          value: $(params.oidc-identity)
+        - name: OIDC_ISSUER
+          value: $(params.oidc-issuer)
+        - name: OIDC_CLIENT_ID
+          value: $(params.rhtas-oidc-client-id)
+        - name: OIDC_CLIENT_SECRET_FILE
+          value: /run/secrets/rhtas/oidc/client-secret
+{{- end }}
       volumeMounts:
         - name: spiffe-workload-api
           mountPath: /spiffe-workload-api
@@ -61,6 +88,11 @@ spec:
         - name: rhtas-functions
           mountPath: /usr/local/lib
           readOnly: true
+{{- if eq .Values.rhtas.oidc.enabled true }}
+        - name: rhtas-oidc-client-secret
+          mountPath: /run/secrets/rhtas/oidc
+          readOnly: true
+{{- end }}
       script: |
         #!/usr/bin/env bash
 

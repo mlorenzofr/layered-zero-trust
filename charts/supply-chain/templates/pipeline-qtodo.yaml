@@ -25,7 +25,7 @@ spec:
     - name: image-target
       type: string
       description: qtodo image push destination (e.g. quay.io/ztvp/qtodo:latest)
-      default: {{ .Values.registry.domain | default (printf "quay-registry-quay-quay-enterprise.%s" .Values.global.hubClusterDomain) }}/{{ .Values.registry.org }}/{{ .Values.registry.repo }}:{{ .Values.qtodo.tag }}
+      default: {{ include "registry.address" . }}/{{ template "qtodo.image" (dict "value" .Values.qtodo.image "context" $) }}
     - name: image-tls-verify
       type: string
       description: Whether to verify TLS when pushing to the OCI registry
@@ -57,16 +57,22 @@ spec:
     - name: oidc-identity
       type: string
       description: The OIDC identity to use for verification
-      default: spiffe://{{ .Values.global.hubClusterDomain }}/ns/{{ .Values.global.namespace }}/sa/pipeline
+      default: {{ include "rhtas.oidc.identity" . }}
     - name: oidc-issuer
       type: string
       description: The OIDC issuer to use for verification
-      default: https://spire-spiffe-oidc-discovery-provider.{{ .Values.global.hubClusterDomain }}
+      default: {{ include "rhtas.oidc.issuer" . }}
+{{- if eq .Values.rhtas.oidc.enabled true }}
+    - name: rhtas-oidc-client-id
+      type: string
+      description: The RHTAS OIDC client ID to use for signing
+      default: {{ .Values.rhtas.oidc.clientId }}
+{{- end }}
 {{- if eq .Values.rhtpa.enabled true }}
     - name: rhtpa-url
       type: string
       description: The URL of the RHTPA service
-      default: https://servertrustify.{{ .Values.global.hubClusterDomain }}
+      default: {{ include "rhtpa.url" . }}
     - name: sbom-file
       type: string
       description: The SBOM file to upload to RHTPA
@@ -74,15 +80,15 @@ spec:
     - name: rhtpa-oidc-url
       type: string
       description: The URL of the RHTPA OIDC service
-      default: https://keycloak.{{ .Values.global.hubClusterDomain }}/realms/{{ .Values.rhtpa.oidcRealm }}
+      default: {{ include "rhtpa.oidc.url" . }}
     - name: rhtpa-oidc-client-id
       type: string
       description: The RHTPA OIDC client ID to use for authentication
-      default: {{ .Values.rhtpa.clientId }}
+      default: {{ .Values.rhtpa.oidc.clientId }}
     - name: rhtpa-oidc-client-secret
       type: string
       description: The RHTPA OIDC client Secret name to use for authentication
-      default: {{ .Values.rhtpa.clientSecretName }}
+      default: {{ .Values.rhtpa.oidc.clientSecretName }}
 {{- end }}
 
   workspaces:
@@ -144,6 +150,14 @@ spec:
           value: $(params.cli-server-url)
         - name: qtodo-artifact-path
           value: $(params.qtodo-artifact-path)
+{{- if eq .Values.rhtas.oidc.enabled true }}
+        - name: oidc-identity
+          value: $(params.oidc-identity)
+        - name: oidc-issuer
+          value: $(params.oidc-issuer)
+        - name: rhtas-oidc-client-id
+          value: $(params.rhtas-oidc-client-id)
+{{- end }}
 
     - name: qtodo-verify-artifact
       runAfter:
@@ -221,6 +235,14 @@ spec:
           value: $(params.tuf-url)
         - name: cli-server-url
           value: $(params.cli-server-url)
+{{- if eq .Values.rhtas.oidc.enabled true }}
+        - name: oidc-identity
+          value: $(params.oidc-identity)
+        - name: oidc-issuer
+          value: $(params.oidc-issuer)
+        - name: rhtas-oidc-client-id
+          value: $(params.rhtas-oidc-client-id)
+{{- end }}
 
     - name: qtodo-generate-sbom
       runAfter:

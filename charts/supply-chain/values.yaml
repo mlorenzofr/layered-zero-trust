@@ -8,21 +8,34 @@ global:
 
 rhtas:
   enabled: false
+  oidc:
+    enabled: false
+    clientId: ""
+    clientSecretName: "rhtas-oidc-client-secret"
+    clientSecretVaultPath: "secret/data/hub/infra/rhtas/rhtas-oidc-client-secret"
+    clientSecretVaultKey: "client-secret"
+    issuer: ""
+    identity: ""
 
 rhtpa:
   enabled: false
-  oidcRealm: "ztvp"
-  clientId: "rhtpa-cli"
-  clientSecretName: "qtodo-rhtpa-cli-password"
-  # RHTPA OIDC CLI secret path (infra)
-  clientSecretVaultPath: "secret/data/hub/infra/rhtpa/rhtpa-oidc-cli"
-  clientSecretVaultKey: "client-secret"
+  url: ""
+  oidc:
+    url: ""
+    realm: "ztvp"
+    clientId: "rhtpa-cli"
+    clientSecretName: "qtodo-rhtpa-cli-password"
+    # RHTPA OIDC CLI secret path (infra)
+    clientSecretVaultPath: "secret/data/hub/infra/rhtpa/rhtpa-oidc-cli"
+    clientSecretVaultKey: "client-secret"
 
 # qtodo repository configuration
 qtodo:
   repository: "https://github.com/validatedpatterns-demos/qtodo.git"
   revision: "main"
-  tag: "latest"
+  image:
+    name: "qtodo"
+    version: "latest"
   buildCmd: "./mvnw -s settings.xml package -DskipTests -Dquarkus.package.jar.type=uber-jar"
   containerfile: "./Containerfile"
 
@@ -40,7 +53,6 @@ registry:
   # Commented to generate it dynamically
   # domain: "quay-registry-quay-quay-enterprise.hub.example.com"
   org: "ztvp"
-  repo: "qtodo"
   tlsVerify: "true"
   user: "quay-user"
   passwordVaultKey: "quay-user-password"
