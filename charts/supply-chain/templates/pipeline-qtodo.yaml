@@ -25,7 +25,7 @@ spec:
     - name: image-target
       type: string
       description: qtodo image push destination (e.g. quay.io/ztvp/qtodo:latest)
-      default: {{ tpl (required "registry.domain (or global.registry.domain) is required" (.Values.registry.domain | default .Values.global.registry.domain)) $ }}/{{ .Values.registry.repository | default .Values.global.registry.repository }}:{{ .Values.qtodo.tag }}
+      default: {{ template "qtodo.image" (dict "value" .Values.qtodo.image "context" $ "useRegistry" true) }}
     - name: image-tls-verify
       type: string
       description: Whether to verify TLS when pushing to the OCI registry
@@ -57,16 +57,22 @@ spec:
     - name: oidc-identity
       type: string
       description: The OIDC identity to use for verification
-      default: spiffe://{{ .Values.global.hubClusterDomain }}/ns/{{ .Values.global.namespace }}/sa/pipeline
+      default: {{ include "rhtas.oidc.identity" . }}
     - name: oidc-issuer
       type: string
       description: The OIDC issuer to use for verification
-      default: https://spire-spiffe-oidc-discovery-provider.{{ .Values.global.hubClusterDomain }}
+      default: {{ include "rhtas.oidc.issuer" . }}
+{{- if eq .Values.rhtas.oidc.enabled true }}
+    - name: rhtas-oidc-client-id
+      type: string
+      description: The RHTAS OIDC client ID to use for signing
+      default: {{ .Values.rhtas.oidc.clientId }}
+{{- end }}
 {{- if eq .Values.rhtpa.enabled true }}
     - name: rhtpa-url
       type: string
       description: The URL of the RHTPA service
-      default: https://servertrustify.{{ .Values.global.hubClusterDomain }}
+      default: {{ include "rhtpa.url" . }}
     - name: sbom-file
       type: string
       description: The SBOM file to upload to RHTPA
@@ -74,15 +80,15 @@ spec:
     - name: rhtpa-oidc-url
       type: string
       description: The URL of the RHTPA OIDC service
-      default: https://keycloak.{{ .Values.global.hubClusterDomain }}/realms/{{ .Values.rhtpa.oidcRealm }}
+      default: {{ include "rhtpa.oidc.url" . }}
     - name: rhtpa-oidc-client-id
       type: string
       description: The RHTPA OIDC client ID to use for authentication
-      default: {{ .Values.rhtpa.clientId }}
+      default: {{ .Values.rhtpa.oidc.clientId }}
     - name: rhtpa-oidc-client-secret
       type: string
       description: The RHTPA OIDC client Secret name to use for authentication
-      default: {{ .Values.rhtpa.clientSecretName }}
+      default: {{ .Values.rhtpa.oidc.clientSecretName }}
 {{- end }}
 
   workspaces:
@@ -132,16 +138,7 @@ spec:
         - name: source
           workspace: qtodo-source
       params:
-        - name: ca-file
-          value: $(params.ca-file)
-        - name: fulcio-url
-          value: $(params.fulcio-url)
-        - name: rekor-url
-          value: $(params.rekor-url)
-        - name: tuf-url
-          value: $(params.tuf-url)
-        - name: cli-server-url
-          value: $(params.cli-server-url)
+{{- include "rhtas.tasks.sigstoreParams" . | nindent 8 }}
         - name: qtodo-artifact-path
           value: $(params.qtodo-artifact-path)
 
@@ -155,20 +152,7 @@ spec:
         - name: source
           workspace: qtodo-source
       params:
-        - name: ca-file
-          value: $(params.ca-file)
-        - name: fulcio-url
-          value: $(params.fulcio-url)
-        - name: rekor-url
-          value: $(params.rekor-url)
-        - name: tuf-url
-          value: $(params.tuf-url)
-        - name: cli-server-url
-          value: $(params.cli-server-url)
-        - name: oidc-identity
-          value: $(params.oidc-identity)
-        - name: oidc-issuer
-          value: $(params.oidc-issuer)
+{{- include "rhtas.tasks.sigstoreParams" . | nindent 8 }}
         - name: qtodo-artifact-path
           value: $(params.qtodo-artifact-path)
 
@@ -209,18 +193,9 @@ spec:
         name: qtodo-sign-image
         kind: Task
       params:
+{{- include "rhtas.tasks.sigstoreParams" . | nindent 8 }}
         - name: image
           value: $(params.image-target)
-        - name: ca-file
-          value: $(params.ca-file)
-        - name: fulcio-url
-          value: $(params.fulcio-url)
-        - name: rekor-url
-          value: $(params.rekor-url)
-        - name: tuf-url
-          value: $(params.tuf-url)
-        - name: cli-server-url
-          value: $(params.cli-server-url)
 
     - name: qtodo-generate-sbom
       runAfter:
@@ -247,18 +222,9 @@ spec:
         - name: source
           workspace: qtodo-source
       params:
+{{- include "rhtas.tasks.sigstoreParams" . | nindent 8 }}
         - name: image
           value: $(params.image-target)
-        - name: ca-file
-          value: $(params.ca-file)
-        - name: fulcio-url
-          value: $(params.fulcio-url)
-        - name: rekor-url
-          value: $(params.rekor-url)
-        - name: tuf-url
-          value: $(params.tuf-url)
-        - name: cli-server-url
-          value: $(params.cli-server-url)
 
 {{- if eq .Values.rhtpa.enabled true }}
     - name: qtodo-upload-sbom
@@ -293,22 +259,9 @@ spec:
         name: qtodo-verify-image
         kind: Task
       params:
+{{- include "rhtas.tasks.sigstoreParams" . | nindent 8 }}
         - name: image
           value: $(params.image-target)
-        - name: ca-file
-          value: $(params.ca-file)
-        - name: fulcio-url
-          value: $(params.fulcio-url)
-        - name: rekor-url
-          value: $(params.rekor-url)
-        - name: tuf-url
-          value: $(params.tuf-url)
-        - name: cli-server-url
-          value: $(params.cli-server-url)
-        - name: oidc-identity
-          value: $(params.oidc-identity)
-        - name: oidc-issuer
-          value: $(params.oidc-issuer)
 
   finally:
     - name: restart-qtodo
