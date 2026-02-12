@@ -356,7 +356,9 @@ clusterGroup:
         - name: rhtas.zeroTrust.email.enabled
           value: "true"
         - name: rhtas.zeroTrust.email.issuer
-          value: https://keycloak.apps.{{ $.Values.global.clusterDomain }}/realms/ztvp
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: rhtas.fulcio.oidcIssuers.email.clientID
+          value: debf994f-e435-44d7-a7d0-77ab8eceef21
     # RHTPA (Red Hat Trusted Profile Analyzer) with SPIFFE Integration
     # Depends on: NooBaa MCG (storage), Vault (secrets), SPIRE (identity), Keycloak (auth)
     trusted-profile-analyzer:
@@ -495,8 +497,24 @@ clusterGroup:
         # Don't forget to uncomment the RHTAS and RHTPA components in this same file
         - name: rhtas.enabled
           value: true
+        - name: rhtas.oidc.enabled
+          value: true
+        - name: rhtas.oidc.url
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: rhtas.oidc.clientId
+          value: debf994f-e435-44d7-a7d0-77ab8eceef21
+        - name: rhtas.oidc.clientSecretVaultPath
+          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-cli
+        - name: rhtas.oidc.issuer
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: rhtas.oidc.identity
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
         - name: rhtpa.enabled
           value: true
+        - name: rhtpa.oidc.url
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: rhtpa.oidc.clientId
+          value: debf994f-e435-44d7-a7d0-77ab8eceef21
         - name: registry.tlsVerify
           value: "false"
         - name: registry.user
