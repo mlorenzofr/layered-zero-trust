@@ -77,7 +77,7 @@ clusterGroup:
       namespace: cert-manager-operator
       channel: stable-v1
       catalogSource: redhat-marketplace
-    Secure Supply Chain: Uncomment to enable OpenShift Pipelines
+    # Secure Supply Chain: Uncomment to enable OpenShift Pipelines
     openshift-pipelines:
       name: openshift-pipelines-operator-rh
       namespace: openshift-operators
