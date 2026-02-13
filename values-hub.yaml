@@ -494,28 +494,28 @@ clusterGroup:
         # Requires: registry credentials in ~/values-secret.yaml
         # Note: registry.domain is REQUIRED for external registry
         # ============================================================
-        - name: quay.enabled
-          value: "false"
-        - name: externalRegistry.enabled
-          value: "true"
-        - name: registry.domain
-          value: quay.io
-        - name: registry.org
-          value: mlorenzofr
-        - name: registry.user
-          value: "mlorenzofr+ztvp"
+        # - name: quay.enabled
+        #   value: "false"
+        # - name: externalRegistry.enabled
+        #   value: "true"
+        # - name: registry.domain
+        #   value: quay.io
+        # - name: registry.org
+        #   value: mlorenzofr
+        # - name: registry.user
+        #   value: "mlorenzofr+ztvp"
         # ============================================================
         # OPTION 3: Embedded OCP Registry (comment out Option 1, 2; uncomment below)
         # ============================================================
-        # - name: registry.domain
-        #   value: default-route-openshift-image-registry.apps.<your-apps-domain>
-        # - name: registry.org
-        #   value: ztvp
-        # - name: registry.user
-        #   value: admin
+        - name: registry.domain
+          value: default-route-openshift-image-registry.apps.ztvp.local.lab
+        - name: registry.org
+          value: ztvp
+        - name: registry.user
+          value: admin
         # Embedded OCP registry only: create image namespace and grant pipeline push (transparent)
-        # - name: registry.embeddedOCP.ensureImageNamespaceRBAC
-        #   value: "true"
+        - name: registry.embeddedOCP.ensureImageNamespaceRBAC
+          value: "true"
         # ============================================================
         # Enable RHTAS signing
         - name: rhtas.enabled
