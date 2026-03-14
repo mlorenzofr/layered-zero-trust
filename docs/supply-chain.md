@@ -208,24 +208,6 @@ To enable this use case, the following parameters should be defined within the [
           value: quay-admin-password
     ```
 
-To simplify setting the appropriate values for this use case, [this Git patch file](./values-patches/supply-chain.patch) can be used to automate applying the desired configurations by executing the following command from the root of the repository:
-
-```shell
-git apply docs/values-patches/supply-chain.patch
-```
-
-> [!NOTE]
-> Ensure you commit the applied changes to a feature branch and push that branch to your remote Git repository.
->
-> For example:
->
-> ```shell
-> git checkout -b supply-chain-setup
-> git add .
-> git commit -m "Apply supply chain configuration patch"
-> git push origin supply-chain-setup
-> ```
-
 ## Automated Secure Supply Chain Pipeline
 
 To automate the application building and certifying process, we will use _Red Hat OpenShift Pipelines_.
