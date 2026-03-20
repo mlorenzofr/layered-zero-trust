@@ -232,6 +232,8 @@ clusterGroup:
       project: hub
       chart: acm
       chartVersion: 0.1.*
+      annotations:
+        argocd.argoproj.io/sync-wave: "5"
       ignoreDifferences:
         - group: internal.open-cluster-management.io
           kind: ManagedClusterInfo
@@ -245,6 +247,8 @@ clusterGroup:
       name: acm-managed-clusters
       project: hub
       path: charts/acm-managed-clusters
+      annotations:
+        argocd.argoproj.io/sync-wave: "10"
       ignoreDifferences:
         - group: cluster.open-cluster-management.io
           kind: ManagedCluster
@@ -270,6 +274,8 @@ clusterGroup:
       project: hub
       chart: hashicorp-vault
       chartVersion: 0.1.*
+      annotations:
+        argocd.argoproj.io/sync-wave: "25"
       # Custom Vault policies for least-privilege access
       # Each application gets access only to its specific secrets path
       #
@@ -425,11 +431,15 @@ clusterGroup:
       project: hub
       chart: golang-external-secrets
       chartVersion: 0.1.*
+      annotations:
+        argocd.argoproj.io/sync-wave: "30"
     rh-keycloak:
       name: rh-keycloak
       namespace: keycloak-system
       project: hub
       path: charts/keycloak
+      annotations:
+        argocd.argoproj.io/sync-wave: "35"
       # SPIFFE Identity Provider is enabled by default in the chart.
       # Override issuer/jwksUrl only if auto-generated values from cluster domain are not suitable.
       # overrides:
@@ -442,11 +452,15 @@ clusterGroup:
       namespace: cert-manager-operator
       project: hub
       path: charts/certmanager
+      annotations:
+        argocd.argoproj.io/sync-wave: "5"
     zero-trust-workload-identity-manager:
       name: zero-trust-workload-identity-manager
       namespace: zero-trust-workload-identity-manager
       project: hub
       path: charts/zero-trust-workload-identity-manager
+      annotations:
+        argocd.argoproj.io/sync-wave: "30"
       overrides:
         - name: spire.clusterName
           value: hub
@@ -455,6 +469,8 @@ clusterGroup:
       namespace: qtodo
       project: hub
       path: charts/qtodo
+      annotations:
+        argocd.argoproj.io/sync-wave: "38"
       ignoreDifferences:
         - kind: ServiceAccount
           jqPathExpressions:
@@ -487,6 +503,8 @@ clusterGroup:
     #  name: supply-chain
     #  project: hub
     #  path: charts/supply-chain
+    #  annotations:
+    #    argocd.argoproj.io/sync-wave: "48"
     #  ignoreDifferences:
     #    - kind: ServiceAccount
     #      jqPathExpressions:
