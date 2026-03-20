@@ -5,7 +5,7 @@ metadata:
   name: {{ .Values.objectStorage.objectBucketClaim.name }}
   namespace: {{ .Values.quay.namespace }}
   annotations:
-    argocd.argoproj.io/sync-wave: "5"  # Create OBC after NooBaa system is ready
+    argocd.argoproj.io/sync-wave: "36"  # Create OBC after NooBaa system is ready
 spec:
   generateBucketName: {{ .Values.objectStorage.objectBucketClaim.bucketName }}
   storageClassName: {{ .Values.objectStorage.objectBucketClaim.storageClass }}

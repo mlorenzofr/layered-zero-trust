@@ -5,7 +5,7 @@ metadata:
   name: {{ .Values.compliance.storage.pvc.name }}
   namespace: openshift-compliance
   annotations:
-    argocd.argoproj.io/sync-wave: '-10'
+    argocd.argoproj.io/sync-wave: '21'
   labels:
     app.kubernetes.io/component: storage
 spec:

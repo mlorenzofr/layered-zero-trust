@@ -4,7 +4,7 @@ metadata:
   name: quay-registry
   namespace: {{ .Values.quay.namespace | default "quay-enterprise" }}
   annotations:
-    argocd.argoproj.io/sync-wave: "10"  # Layer 1: Deploy Quay Registry
+    argocd.argoproj.io/sync-wave: "41"  # Layer 1: Deploy Quay Registry
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   components:
