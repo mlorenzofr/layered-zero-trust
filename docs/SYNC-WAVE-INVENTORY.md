@@ -107,6 +107,23 @@ Every sync-wave in the repository, in order. **App** = hub-level Argo CD Applica
 | trusted-artifact-signer | 15 | 46 | Deploy after dependencies |
 | supply-chain | — | 48 | After RHTAS/ACS, before chart templates (newly added) |
 
+## Application-level waves (`values-coco-dev.yaml`)
+
+The CoCo development configuration reuses several of the same components. Only the active `compliance-scanning` wave differs from the commented-out defaults; other entries are commented out but updated for consistency.
+
+| Application | Old | Current | Comment |
+| --- | ---: | ---: | --- |
+| compliance-scanning | -30 | 1 | Earliest app |
+| openshift-storage (OperatorGroup) | -5 | 26 | Commented; propagated to OperatorGroup |
+| quay-enterprise (namespace) | 1 | 32 | Commented; before NooBaa and Quay components |
+| trusted-artifact-signer (namespace) | 1 | 32 | Commented; auto-created by RHTAS operator |
+| odf (subscription) | -4 | 27 | Commented; after OperatorGroup (26) |
+| quay-operator (subscription) | -3 | 28 | Commented; after ODF operator |
+| rhtas-operator (subscription) | -2 | 29 | Commented; after Quay operator |
+| noobaa-mcg | 5 | 36 | Commented; deploy after core services |
+| quay-registry | 10 | 41 | Commented; deploy after NooBaa |
+| trusted-artifact-signer | 15 | 46 | Commented; deploy after dependencies |
+
 ## Chart-level waves (templates)
 
 These control resource ordering within a single Application's sync. Template waves are resolved locally within each app, not globally across all apps.
