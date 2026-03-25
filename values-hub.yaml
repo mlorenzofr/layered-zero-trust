@@ -10,7 +10,6 @@ spire:
       annotations:
         route.openshift.io/termination: reencrypt
         route.openshift.io/destination-ca-certificate-secret: spire-bundle
-
 clusterGroup:
   name: hub
   isHubCluster: true
@@ -72,6 +71,33 @@ clusterGroup:
         operatorGroup: true
         labels:
           openshift.io/cluster-monitoring: "true"
+    - openshift-storage:
+        operatorGroup: true
+        targetNamespace: openshift-storage
+        annotations:
+          openshift.io/cluster-monitoring: "true"
+          argocd.argoproj.io/sync-wave: "26"
+    - quay-enterprise:
+        annotations:
+          argocd.argoproj.io/sync-wave: "32"
+        labels:
+          openshift.io/cluster-monitoring: "true"
+    - trusted-artifact-signer:
+        annotations:
+          argocd.argoproj.io/sync-wave: "32"
+        labels:
+          openshift.io/cluster-monitoring: "true"
+    - rhtpa-operator:
+        operatorGroup: true
+        targetNamespace: rhtpa-operator
+        annotations:
+          argocd.argoproj.io/sync-wave: "26"
+    - trusted-profile-analyzer:
+        annotations:
+          argocd.argoproj.io/sync-wave: "32"
+        labels:
+          openshift.io/cluster-monitoring: "true"
+    - openshift-pipelines
   subscriptions:
     acm:
       name: advanced-cluster-management
@@ -112,41 +138,70 @@ clusterGroup:
       namespace: openshift-operators
       channel: stable
       source: redhat-operators
-    #
-    # Storage and Registry operator subscriptions
-    # Required for RHTPA and QUAY (provides NooBaa object storage backend)
-    # ODF provides object storage backend (NooBaa) for RHTPA and optionally Quay
-    # odf:
-    #   name: odf-operator
-    #   namespace: openshift-storage
-    #   channel: stable-4.20
-    #   annotations:
-    #     argocd.argoproj.io/sync-wave: "27"  # Install after OperatorGroup (26)
-    # quay-operator:
-    #   name: quay-operator
-    #   namespace: openshift-operators
-    #   channel: stable-3.15
-    #   annotations:
-    #     argocd.argoproj.io/sync-wave: "28"  # Install after ODF operator
-    # RHTAS operator subscription (required when RHTAS application is enabled)
-    # COMMENTED OUT: Uncomment to enable RHTAS with SPIFFE integration
-    # rhtas-operator:
-    #   name: rhtas-operator
-    #   namespace: openshift-operators
-    #   channel: stable
-    #   annotations:
-    #     argocd.argoproj.io/sync-wave: "29"  # Install after Quay operator, before applications
-    #   catalogSource: redhat-operators
-    # RHTPA operator subscription
-    # Channel: stable-v1.1 provides latest 1.1.x patch updates
-    # Note: No direct upgrade path from 1.1.x to 2.x (requires fresh install)
-    # rhtpa-operator:
-    #   name: rhtpa-operator
-    #   namespace: rhtpa-operator  # MUST use dedicated namespace (not openshift-operators)
-    #   channel: stable-v1.1  # Use stable-v1.1 channel for 1.1.x updates
-    #   catalogSource: redhat-operators
-    #   annotations:
-    #     argocd.argoproj.io/sync-wave: "27"  # Install after OperatorGroup (26), before applications
+      #
+      # Storage and Registry operator subscriptions
+      # Required for RHTPA and QUAY (provides NooBaa object storage backend)
+      # ODF provides object storage backend (NooBaa) for RHTPA and optionally Quay
+      # odf:
+      #   name: odf-operator
+      #   namespace: openshift-storage
+      #   channel: stable-4.20
+      #   annotations:
+      #     argocd.argoproj.io/sync-wave: "27"  # Install after OperatorGroup (26)
+      # quay-operator:
+      #   name: quay-operator
+      #   namespace: openshift-operators
+      #   channel: stable-3.15
+      #   annotations:
+      #     argocd.argoproj.io/sync-wave: "28"  # Install after ODF operator
+      # RHTAS operator subscription (required when RHTAS application is enabled)
+      # COMMENTED OUT: Uncomment to enable RHTAS with SPIFFE integration
+      # rhtas-operator:
+      #   name: rhtas-operator
+      #   namespace: openshift-operators
+      #   channel: stable
+      #   annotations:
+      #     argocd.argoproj.io/sync-wave: "29"  # Install after Quay operator, before applications
+      #   catalogSource: redhat-operators
+      # RHTPA operator subscription
+      # Channel: stable-v1.1 provides latest 1.1.x patch updates
+      # Note: No direct upgrade path from 1.1.x to 2.x (requires fresh install)
+      # rhtpa-operator:
+      #   name: rhtpa-operator
+      #   namespace: rhtpa-operator  # MUST use dedicated namespace (not openshift-operators)
+      #   channel: stable-v1.1  # Use stable-v1.1 channel for 1.1.x updates
+      #   catalogSource: redhat-operators
+      #   annotations:
+      #     argocd.argoproj.io/sync-wave: "27"  # Install after OperatorGroup (26), before applications
+    openshift-pipelines:
+      name: openshift-pipelines-operator-rh
+      namespace: openshift-operators
+    odf:
+      name: odf-operator
+      namespace: openshift-storage
+      channel: stable-4.20
+      annotations:
+        argocd.argoproj.io/sync-wave: "27"
+    quay-operator:
+      name: quay-operator
+      namespace: openshift-operators
+      channel: stable-3.15
+      annotations:
+        argocd.argoproj.io/sync-wave: "28"
+    rhtas-operator:
+      name: rhtas-operator
+      namespace: openshift-operators
+      channel: stable
+      annotations:
+        argocd.argoproj.io/sync-wave: "29"
+      catalogSource: redhat-operators
+    rhtpa-operator:
+      name: rhtpa-operator
+      namespace: rhtpa-operator
+      channel: stable-v1.1
+      catalogSource: redhat-operators
+      annotations:
+        argocd.argoproj.io/sync-wave: "27"
   projects:
     - hub
   # Explicitly mention the cluster-state based overrides we plan to use for this pattern.
@@ -199,11 +254,10 @@ clusterGroup:
         # The initial Job runs once during first sync; CronJob handles ongoing extraction
         - name: debug.keepFailedJobs
           value: "true"
-        
         # Enable verbose logging for troubleshooting (uncomment if needed)
         # - name: debug.verbose
         #   value: "true"
-        
+
         # Primary custom CA: Use secretRef to reference an existing Kubernetes secret containing CA certificates
         # Uncomment to add a primary custom CA:
         # Single cert: oc create secret generic custom-ca-bundle --from-file=ca.crt=/path/to/ca.crt -n openshift-config
@@ -217,15 +271,13 @@ clusterGroup:
           value: openshift-config
         - name: customCA.secretRef.key
           value: ca.crt
-        
         # Automatic rollout configuration (simple overrides work fine)
         - name: rollout.enabled
           value: "true"
         - name: rollout.strategy
           value: labeled
-        
-        # Note: additionalCertificates (complex nested array) temporarily disabled
-        # Need to find proper way to pass complex structures in Validated Patterns
+          # Note: additionalCertificates (complex nested array) temporarily disabled
+          # Need to find proper way to pass complex structures in Validated Patterns
     acm:
       name: acm
       namespace: open-cluster-management
@@ -321,18 +373,33 @@ clusterGroup:
             subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/qtodo/sa/qtodo
             policies:
               - apps-qtodo-jwt-secret
-          # RHTPA vault role
-          # - name: rhtpa
-          #   audience: rhtpa
-          #   subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/trusted-profile-analyzer/sa/rhtpa
-          #   policies:
-          #     - hub-infra-rhtpa-jwt-secret
-          # Supply chain vault role (for Tekton pipelines)
-          # - name: supply-chain
-          #   audience: supply-chain
-          #   subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/pipeline/sa/pipeline
-          #   policies:
-          #     - hub-supply-chain-jwt-secret
+              # RHTPA vault role
+              # - name: rhtpa
+              #   audience: rhtpa
+              #   subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/trusted-profile-analyzer/sa/rhtpa
+              #   policies:
+              #     - hub-infra-rhtpa-jwt-secret
+              # Supply chain vault role (for Tekton pipelines)
+              # - name: supply-chain
+              #   audience: supply-chain
+              #   subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/pipeline/sa/pipeline
+              #   policies:
+              #     - hub-supply-chain-jwt-secret
+          - name: rhtpa
+            audience: rhtpa
+            subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/trusted-profile-analyzer/sa/rhtpa
+            policies:
+              - hub-infra-rhtpa-jwt-secret
+          - name: supply-chain
+            audience: supply-chain
+            subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/pipeline/sa/pipeline
+            policies:
+              - hub-supply-chain-jwt-secret
+          - name: rhtas
+            audience: rhtas
+            subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/trusted-artifact-signer/sa/rhtas
+            policies:
+              - hub-infra-rhtas-jwt-secret
     # Shared Object Storage Backend
     # Required for RHTPA and QUAY (provides S3-compatible storage via NooBaa MCG)
     # NooBaa MCG provides S3-compatible object storage for multiple applications
@@ -440,9 +507,9 @@ clusterGroup:
       path: charts/keycloak
       annotations:
         argocd.argoproj.io/sync-wave: "35"
-      # SPIFFE Identity Provider is enabled by default in the chart.
-      # Override issuer/jwksUrl only if auto-generated values from cluster domain are not suitable.
-      # overrides:
+        # SPIFFE Identity Provider is enabled by default in the chart.
+        # Override issuer/jwksUrl only if auto-generated values from cluster domain are not suitable.
+        # overrides:
         # - name: keycloak.spiffeIdentityProvider.config.config.issuer
         #   value: "spiffe://apps.example.com"
         # - name: keycloak.spiffeIdentityProvider.config.config.jwksUrl
@@ -486,18 +553,36 @@ clusterGroup:
           value: qtodo
         - name: app.vault.secretPath
           value: secret/data/apps/qtodo/qtodo-db
-        # For Secure Supply Chain, we changed the qtodo image to use the one built in the secure supply chain
-        # - name: app.images.main.name
-        #   value: quay-registry-quay-quay-enterprise.apps.{{ $.Values.global.clusterDomain }}/ztvp/qtodo
-        # - name: app.images.main.version
-        #   value: latest
-        # Uncomment to enable registry authentication
-        # - name: app.images.main.registry.auth
-        #   value: true
-        # - name: app.images.main.registry.user
-        #   value: quay-user
-        # - name: app.images.main.registry.passwordVaultKey
-        #   value: quay-user-password
+          # For Secure Supply Chain, we changed the qtodo image to use the one built in the secure supply chain
+          # - name: app.images.main.name
+          #   value: quay-registry-quay-quay-enterprise.apps.{{ $.Values.global.clusterDomain }}/ztvp/qtodo
+          # - name: app.images.main.version
+          #   value: latest
+          # Uncomment to enable registry authentication
+          # - name: app.images.main.registry.auth
+          #   value: true
+          # - name: app.images.main.registry.user
+          #   value: quay-user
+          # - name: app.images.main.registry.passwordVaultKey
+          #   value: quay-user-password
+        - name: app.images.main.name
+          value: quay-registry-quay-quay-enterprise.apps.{{ $.Values.global.clusterDomain }}/ztvp/qtodo
+        - name: app.images.main.version
+          value: latest
+        - name: app.images.main.registry.auth
+          value: true
+        - name: app.images.main.registry.user
+          value: quay-admin
+        - name: app.images.main.registry.passwordVaultKey
+          value: quay-admin-password
+        - name: app.oidc.authServerUrl
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: app.oidc.clientId
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
+        - name: app.oidc.clientSecret.enabled
+          value: true
+        - name: app.oidc.clientSecret.vaultPath
+          value: secret/data/apps/qtodo/qtodo-oidc-entraid
     # Secure Supply Chain - Uncomment to enable
     # supply-chain:
     #  name: supply-chain
@@ -529,9 +614,9 @@ clusterGroup:
       project: hub
       path: charts/acs-central
       overrides:
-    # Uncomment and set if you need a specific StorageClass:
-    #    - name: central.persistence.storageClass
-    #      value: gp3-csi # Example for AWS
+        # Uncomment and set if you need a specific StorageClass:
+        #    - name: central.persistence.storageClass
+        #      value: gp3-csi # Example for AWS
         - name: central.exposure.route.enabled
           value: "true"
         - name: integration.keycloak.enabled
@@ -540,11 +625,11 @@ clusterGroup:
           value: "ztvp"
         - name: integration.keycloak.clientId
           value: "acs-central"
-    # ACS to scan images stored in Quay (Uncomment to enable)
-    #    - name: integration.quay.enabled
-    #      value: "true"
-    #    - name: integration.quay.url
-    #      value: "quay-quay-enterprise.apps.{{ .Values.global.domain }}"
+          # ACS to scan images stored in Quay (Uncomment to enable)
+          #    - name: integration.quay.enabled
+          #      value: "true"
+          #    - name: integration.quay.url
+          #      value: "quay-quay-enterprise.apps.{{ .Values.global.domain }}"
       extraValueFiles:
         - /values-global.yaml
         - /values-{{ .Values.global.pattern }}-hub.yaml
@@ -555,7 +640,6 @@ clusterGroup:
             - /spec/scanner/scannerComponent
       annotations:
         argocd.argoproj.io/sync-wave: "41"
-
     # ACS Secured Cluster (Uncomment to enable)
     acs-secured-cluster:
       name: acs-secured-cluster
@@ -570,6 +654,121 @@ clusterGroup:
         - /values-{{ .Values.global.pattern }}-hub.yaml
       annotations:
         argocd.argoproj.io/sync-wave: "46"
+    noobaa-mcg:
+      name: noobaa-mcg
+      namespace: openshift-storage
+      project: hub
+      path: charts/noobaa-mcg
+      annotations:
+        argocd.argoproj.io/sync-wave: "36"
+    quay-registry:
+      name: quay-registry
+      namespace: quay-enterprise
+      project: hub
+      path: charts/quay-registry
+      annotations:
+        argocd.argoproj.io/sync-wave: "41"
+    trusted-artifact-signer:
+      name: trusted-artifact-signer
+      namespace: trusted-artifact-signer
+      project: hub
+      path: charts/rhtas-operator
+      annotations:
+        argocd.argoproj.io/sync-wave: "46"
+      overrides:
+        - name: rhtas.zeroTrust.spire.enabled
+          value: "true"
+        - name: rhtas.zeroTrust.spire.trustDomain
+          value: "apps.{{ $.Values.global.clusterDomain }}"
+        - name: rhtas.zeroTrust.spire.issuer
+          value: "https://spire-spiffe-oidc-discovery-provider.apps.{{ $.Values.global.clusterDomain }}"
+        - name: rhtas.zeroTrust.email.enabled
+          value: "true"
+        - name: rhtas.zeroTrust.email.issuer
+          value: https://keycloak.apps.{{ $.Values.global.clusterDomain }}/realms/ztvp
+        - name: rhtas.zeroTrust.email.issuer
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: rhtas.fulcio.oidcIssuers.email.clientID
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
+    trusted-profile-analyzer:
+      name: trusted-profile-analyzer
+      namespace: trusted-profile-analyzer
+      project: hub
+      path: charts/rhtpa-operator
+      annotations:
+        argocd.argoproj.io/sync-wave: "41"
+      ignoreDifferences:
+        - group: batch
+          kind: Job
+          jsonPointers:
+            - /status
+      overrides:
+        - name: rhtpa.zeroTrust.vault.url
+          value: https://vault.vault.svc.cluster.local:8200
+        - name: rhtpa.modules.createImporters.importers.cve.cve.disabled
+          value: "false"
+        - name: rhtpa.modules.createImporters.importers.osv-github.osv.disabled
+          value: "false"
+        - name: rhtpa.modules.createImporters.importers.redhat-csaf.csaf.disabled
+          value: "false"
+        - name: rhtpa.modules.createImporters.importers.quay-redhat-user-workloads.quay.disabled
+          value: "false"
+        - name: rhtpa.modules.createImporters.importers.redhat-sboms.sbom.disabled
+          value: "false"
+        - name: rhtpa.zeroTrust.oidc.authServerUrl
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: rhtpa.zeroTrust.oidc.userPasswordVaultKey
+          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-ui
+        - name: rhtpa.zeroTrust.oidc.clients.frontend.clientId
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
+        - name: rhtpa.zeroTrust.oidc.clients.cli.clientId
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
+        - name: rhtpa.zeroTrust.oidc.clients.cli.secretVaultPath
+          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-ui
+    supply-chain:
+      name: supply-chain
+      project: hub
+      path: charts/supply-chain
+      annotations:
+        argocd.argoproj.io/sync-wave: "48"
+      ignoreDifferences:
+        - group: ""
+          kind: ServiceAccount
+          jqPathExpressions:
+            - .imagePullSecrets[]|select(.name | contains("-dockercfg-"))
+      overrides:
+        - name: rhtas.enabled
+          value: true
+        - name: rhtpa.enabled
+          value: true
+        - name: registry.tlsVerify
+          value: "false"
+        - name: registry.user
+          value: quay-admin
+        - name: registry.passwordVaultKey
+          value: quay-admin-password
+        - name: rhtas.spire.enabled
+          value: false
+        - name: rhtas.oidc.enabled
+          value: true
+        - name: rhtas.oidc.url
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: rhtas.oidc.clientId
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
+        - name: rhtas.oidc.clientSecretName
+          value: ""
+        - name: rhtas.oidc.clientSecretVaultPath
+          value: secret/data/hub/infra/rhtas/rhtas-entraid-cli
+        - name: rhtas.oidc.issuer
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: rhtas.oidc.identity
+          value: manloren@redhat.com
+        - name: rhtpa.oidc.url
+          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+        - name: rhtpa.oidc.clientId
+          value: b3d0f828-a73a-4e6b-84a6-c2f25dd6a39e
+        - name: rhtpa.oidc.clientSecretVaultPath
+          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-ui
   argoCD:
     resourceHealthChecks:
       - check: |
@@ -612,7 +811,6 @@ clusterGroup:
         kinds:
         - TaskRun
         - PipelineRun
-
   imperative:
     # NOTE: We *must* use lists and not hashes. As hashes lose ordering once parsed by helm
     # The default schedule is every 10 minutes: imperative.schedule
@@ -648,15 +846,15 @@ clusterGroup:
   #          values:
   #            - OpenShift
   # End of Pipeline/DevSecOps configuration
+# exampleRegion:
+#   name: group-one
+#   acmlabels:
+#     - name: clusterGroup
+#       value: group-one
+#   helmOverrides:
+#     - name: clusterGroup.isHubCluster
+#       value: false
 
-    # exampleRegion:
-    #   name: group-one
-    #   acmlabels:
-    #     - name: clusterGroup
-    #       value: group-one
-    #   helmOverrides:
-    #     - name: clusterGroup.isHubCluster
-    #       value: false
 #  To have apps in multiple flavors, use namespaces and use helm overrides as appropriate
 #
 #    pipelines:
@@ -707,7 +905,6 @@ clusterGroup:
 #          values:
 #            - OpenShift
 
-
 # List of previously provisioned clusters to import and manage from the Hub cluster
 acmManagedClusters:
   clusters: []
@@ -724,4 +921,3 @@ acmManagedClusters:
   #      cloud: auto-detect
   #      vendor: auto-detect
   #    kubeconfigVaultPath: secret/data/hub/kubeconfig-spoke-2
-
