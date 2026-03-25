@@ -1,47 +1,61 @@
 ---
 clusterGroup:
   applications:
+    vault:
+      jwt:
+        roles:
+          - name: rhtas
+            audience: rhtas
+            subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/trusted-artifact-signer/sa/rhtas
+            policies:
+              - hub-infra-rhtas-jwt-secret
     qtodo:
       overrides:
         - name: app.oidc.authServerUrl
           value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
         - name: app.oidc.clientId
-          value: debf994f-e435-44d7-a7d0-77ab8eceef21
-        - name: app.oidcSecret.vaultPath
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
+        - name: app.oidc.clientSecret.enabled
+          value: true
+        - name: app.oidc.clientSecret.vaultPath
           value: secret/data/apps/qtodo/qtodo-oidc-entraid
     trusted-artifact-signer:
       overrides:
         - name: rhtas.zeroTrust.email.issuer
           value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
         - name: rhtas.fulcio.oidcIssuers.email.clientID
-          value: debf994f-e435-44d7-a7d0-77ab8eceef21
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
     trusted-profile-analyzer:
       overrides:
         - name: rhtpa.zeroTrust.oidc.authServerUrl
           value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
         - name: rhtpa.zeroTrust.oidc.userPasswordVaultKey
-          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-cli
+          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-ui
         - name: rhtpa.zeroTrust.oidc.clients.frontend.clientId
-          value: debf994f-e435-44d7-a7d0-77ab8eceef21
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
         - name: rhtpa.zeroTrust.oidc.clients.cli.clientId
-          value: debf994f-e435-44d7-a7d0-77ab8eceef21
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
         - name: rhtpa.zeroTrust.oidc.clients.cli.secretVaultPath
-          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-cli
+          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-ui
     supply-chain:
       overrides:
+        - name: rhtas.spire.enabled
+          value: false
         - name: rhtas.oidc.enabled
           value: true
         - name: rhtas.oidc.url
           value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
         - name: rhtas.oidc.clientId
-          value: debf994f-e435-44d7-a7d0-77ab8eceef21
-        - name: rhtas.oidc.clientSecretVaultPath
-          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-cli
+          value: ea544083-9606-48ae-9118-d66bfbc7c9ae
+        - name: rhtas.oidc.clientSecretName
+          value: ""
         - name: rhtas.oidc.issuer
           value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
         - name: rhtas.oidc.identity
-          value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
+          value: manloren@redhat.com
         - name: rhtpa.oidc.url
           value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
         - name: rhtpa.oidc.clientId
-          value: debf994f-e435-44d7-a7d0-77ab8eceef21
+          value: b3d0f828-a73a-4e6b-84a6-c2f25dd6a39e
+        - name: rhtpa.oidc.clientSecretVaultPath
+          value: secret/data/hub/infra/rhtpa/rhtpa-entraid-ui
