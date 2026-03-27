@@ -38,7 +38,8 @@ app:
   oidc:
     enabled: false  # Will be enabled when SPIFFE is enabled
     authServerUrl: ""
-    clientId: qtodo-app
+    realm: "ztvp"
+    clientId: "qtodo-app"
     applicationType: "web-app"
     authenticatedPaths: "/*"
     authenticatedPolicy: "authenticated"
@@ -46,6 +47,10 @@ app:
     clientAssertion:
       enabled: true
       jwtTokenPath: "/svids/jwt.token"
+    clientSecret:
+      enabled: false
+      name: "oidc-client-secret"
+      vaultPath: "secret/data/apps/qtodo/qtodo-oidc-client"
 
   spire:
     enabled: true   # Enable SPIFFE + OIDC integration by default
@@ -56,16 +61,9 @@ app:
   vault:
     url: ""
     role: "qtodo"
+    audience: "qtodo"
     # QTodo secrets path (app-level isolation)
     secretPath: "secret/data/apps/qtodo/qtodo-db"
-
-  # OIDC External Secret configuration
-  # Disabled when using federated client assertion (no client secret needed)
-  oidcSecret:
-    enabled: false
-    name: "oidc-client-secret"
-    # QTodo OIDC secret path (app-level isolation)
-    vaultPath: "secret/data/apps/qtodo/qtodo-oidc-client"
 
   # Truststore configuration for Java CA certificates (PKCS12 format)
   truststore:
