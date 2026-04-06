@@ -566,7 +566,7 @@ clusterGroup:
           # - name: app.images.main.registry.passwordVaultKey
           #   value: quay-user-password
         - name: app.images.main.name
-          value: quay-registry-quay-quay-enterprise.apps.{{ $.Values.global.clusterDomain }}/ztvp/qtodo
+          value: quay-registry-quay-quay-enterprise.apps.ztvp.local.lab/ztvp/qtodo
         - name: app.images.main.version
           value: latest
         - name: app.images.main.registry.auth
