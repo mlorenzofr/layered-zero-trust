@@ -742,7 +742,7 @@ clusterGroup:
         - name: rhtas.enabled
           value: true
         - name: rhtpa.enabled
-          value: true
+          value: false
         - name: registry.tlsVerify
           value: "false"
         - name: registry.user
