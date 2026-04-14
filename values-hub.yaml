@@ -676,6 +676,8 @@ clusterGroup:
       annotations:
         argocd.argoproj.io/sync-wave: "46"
       overrides:
+        - name: rhtas.logType
+          value: "dev"
         - name: rhtas.zeroTrust.spire.enabled
           value: "true"
         - name: rhtas.zeroTrust.spire.trustDomain
