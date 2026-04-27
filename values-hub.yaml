@@ -464,6 +464,9 @@ clusterGroup:
       path: charts/noobaa-mcg
       annotations:
         argocd.argoproj.io/sync-wave: "36"
+      overrides:
+        - name: noobaa.dbSize
+          value: 10Gi
     trusted-profile-analyzer:
       name: trusted-profile-analyzer
       namespace: trusted-profile-analyzer
@@ -551,12 +554,6 @@ clusterGroup:
       overrides:
       - name: job.image
         value: "registry.redhat.io/openshift4/ose-cli:latest"
-      - name: job.resources.requests.cpu
-        value: "50m"
-      - name: job.resources.requests.memory
-        value: "128Mi"
-      - name: job.resources.limits.cpu
-        value: "500m"
       - name: job.resources.limits.memory
         value: "1Gi"
   argoCD:
