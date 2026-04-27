@@ -386,7 +386,7 @@ clusterGroup:
       - name: app.oidc.authServerUrl
         value: https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0
       - name: app.oidc.clientId
-        value: ea544083-9606-48ae-9118-d66bfbc7c9ae
+        value: debf994f-e435-44d7-a7d0-77ab8eceef21
       - name: app.oidc.clientSecret.enabled
         value: true
       - name: app.oidc.clientSecret.vaultPath
