@@ -1,0 +1,38 @@
+# Azure Entra ID integration
+# Depends on: supply-chain
+clusterGroup:
+  merge_into_applications:
+    qtodo:
+      overrides:
+        - name: app.oidc.authServerUrl
+          value: "https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0"
+        - name: app.oidc.clientId
+          value: "<YOUR_CLIENT_ID>"
+        - name: app.oidc.clientSecret.enabled
+          value: "true"
+        - name: app.oidc.clientSecret.vaultPath
+          value: "secret/data/apps/qtodo/qtodo-oidc-entraid"
+    trusted-artifact-signer:
+      overrides:
+        - name: rhtas.zeroTrust.email.issuer
+          value: "https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0"
+        - name: rhtas.fulcio.oidcIssuers.email.clientID
+          value: "<YOUR_CLIENT_ID>"
+    supply-chain:
+      overrides:
+        - name: rhtas.spire.enabled
+          value: "false"
+        - name: rhtas.oidc.enabled
+          value: "true"
+        - name: rhtas.oidc.url
+          value: "https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0"
+        - name: rhtas.oidc.clientId
+          value: "<YOUR_CLIENT_ID>"
+        - name: rhtas.oidc.clientSecretName
+          value: ""
+        - name: rhtas.oidc.issuer
+          value: "https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0"
+        - name: rhtas.oidc.identity
+          value: "<YOUR_ENTRAID_EMAIL>"
+        - name: rhtpa.enabled
+          value: "false"
