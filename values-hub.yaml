@@ -164,7 +164,7 @@ clusterGroup:
     rhtpa-operator:
       name: rhtpa-operator
       namespace: rhtpa-operator
-      channel: stable-v1.1
+      channel: stable-v2.2
       catalogSource: redhat-operators
       annotations:
         argocd.argoproj.io/sync-wave: "27"
