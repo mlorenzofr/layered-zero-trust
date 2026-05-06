@@ -66,7 +66,7 @@ Generate the OIDC configuration
 oidc:
         issuerUrl: {{ include "rhtpa-operator.oidc.url" . }}
 {{- if ne .Values.rhtpa.zeroTrust.oidc.clients.cli.apiId "" }}
-        uiScopes: "openid profile email offline_access api://{{ .Values.rhtpa.zeroTrust.oidc.clients.cli.apiId }}/create:document api://{{ .Values.rhtpa.zeroTrust.oidc.clients.cli.apiId }}/read:document api://{{ .Values.rhtpa.zeroTrust.oidc.clients.cli.apiId }}/update:document api://{{ .Values.rhtpa.zeroTrust.oidc.clients.cli.apiId }}/delete:document"
+        uiScopes: \"openid profile email offline_access api://{{ .Values.rhtpa.zeroTrust.oidc.clients.cli.apiId }}/create:document api://{{ .Values.rhtpa.zeroTrust.oidc.clients.cli.apiId }}/read:document api://{{ .Values.rhtpa.zeroTrust.oidc.clients.cli.apiId }}/update:document api://{{ .Values.rhtpa.zeroTrust.oidc.clients.cli.apiId }}/delete:document\"
         loadUser: false
 {{- end }}
         clients:
