@@ -1,5 +1,5 @@
 defaultDenyNetworkPolicy:
-  enabled: false
+  enabled: true
 
 vault:
   server:

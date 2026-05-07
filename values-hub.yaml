@@ -318,11 +318,10 @@ clusterGroup:
       name: vault
       namespace: vault
       project: hub
-      # TEMPORARY: Using fork for testing network policy changes
-      # Revert to chart: hashicorp-vault / chartVersion: 0.1.* after PR is merged
-      path: .
-      repoURL: https://github.com/p-rog/hashicorp-vault-chart.git
-      targetRevision: network-policy-vault
+      chart: hashicorp-vault
+      chartVersion: 0.1.*
+      extraValueFiles:
+        - /overrides/values-vault-network-policy.yaml
       annotations:
         argocd.argoproj.io/sync-wave: "25"
       # Custom Vault policies for least-privilege access
