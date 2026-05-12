@@ -4,7 +4,7 @@ metadata:
   name: qtodo-config-env
   namespace: {{ .Release.Namespace }}
 data:
-{{- if eq .Values.app.spire.enabled true }}
+{{- if eq .Values.app.oidc.enabled true }}
   QUARKUS_OIDC_ENABLED: "true"
   QUARKUS_OIDC_AUTH_SERVER_URL: "{{ include "qtodo.oidc.url" . }}"
   QUARKUS_OIDC_CLIENT_ID: "{{ .Values.app.oidc.clientId }}"

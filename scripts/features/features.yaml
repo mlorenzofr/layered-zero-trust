@@ -29,6 +29,10 @@ features:
     org: ztvp
     image_name: qtodo
 
+  entra-id:
+    description: "Azure Entra ID integration"
+    depends_on: [supply-chain]
+
 # Registry options (only used with supply-chain feature)
 # Each maps to a file under registry/ subdirectory.
 registry_options:
