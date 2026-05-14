@@ -91,7 +91,7 @@ job:
   # Container image for CA extraction
   image:
     registry: registry.redhat.io
-    repository: openshift4/ose-cli
+    repository: openshift4/ose-cli-rhel9
     tag: latest
     pullPolicy: IfNotPresent
   
