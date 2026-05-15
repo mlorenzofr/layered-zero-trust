@@ -48,6 +48,34 @@ The ACS deployment in the Layered Zero Trust pattern is implemented using:
   - Admission Controller (policy enforcement)
   - Collector (DaemonSet for runtime monitoring)
 
+## Route and TLS Configuration
+
+ACS Central exposes two OpenShift routes with different TLS termination modes:
+
+| Route | TLS Mode | Purpose |
+|---|---|---|
+| `central` | Passthrough | Sensor/SecuredCluster gRPC communication (mTLS) |
+| `central-reencrypt` | Reencrypt | Browser UI access using cluster wildcard certificate |
+
+The **passthrough route is required** for sensor communication. Sensors use
+mutual TLS with certificates from the cluster init bundle, and the RHACS
+operator [explicitly states](https://github.com/stackrox/stackrox/blob/master/operator/api/v1alpha1/central_types.go)
+that the reencrypt route *"should not be used for sensor communication"*
+because the router terminates the sensor's TLS session, breaking mTLS
+authentication.
+
+The **reencrypt route** is enabled by default (`central.exposure.route.reencrypt.enabled: true`)
+so that browser users see the cluster's wildcard certificate instead of
+Central's self-signed certificate. This works on all platforms:
+
+- **Cloud (AWS, Azure, GCP)**: wildcard cert is signed by a public CA — no browser warning
+- **BareMetal / vSphere**: wildcard cert uses the cluster ingress CA — trusted
+  if `ztvp-certificates` has injected it via `proxyCA`
+
+The RHACS operator auto-generates the reencrypt route hostname
+(`central-reencrypt-stackrox.apps.<domain>`). The ConsoleLink and OIDC auth
+provider `uiEndpoint` automatically point to the reencrypt route when enabled.
+
 ## Deployment Workflow
 
 ### Phase 1: Operator Installation (Managed by Pattern Framework)

@@ -73,10 +73,13 @@ central:
   exposure:
     route:
       enabled: true
-      # Use cluster wildcard certificate
+      host: "" # Autogenerate if not specified
       tls:
         enabled: true
         termination: passthrough
+      reencrypt:
+        enabled: true
+        host: "" # Autogenerate if not specified
     loadBalancer:
       enabled: false
 
@@ -170,8 +173,8 @@ integration:
     # Container image for the auth provider configuration job
     # Uses OpenShift CLI tools (curl, oc, jq, etc.)
     jobImage:
-      registry: image-registry.openshift-image-registry.svc:5000
-      repository: openshift/cli
+      registry: registry.redhat.io
+      repository: openshift4/ose-cli-rhel9
       tag: latest
       pullPolicy: IfNotPresent
     # Service account used by jobs (init bundle, auth provider, htpasswd)

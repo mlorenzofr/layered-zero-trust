@@ -596,6 +596,8 @@ clusterGroup:
     #      value: gp3-csi # Example for AWS
         - name: central.exposure.route.enabled
           value: "true"
+        - name: central.exposure.route.reencrypt.host
+          value: "central.{{ $.Values.global.localClusterDomain }}"
         - name: integration.keycloak.enabled
           value: "true"
         - name: integration.keycloak.realm
