@@ -47,10 +47,48 @@ networkPolicy:
         - protocol: TCP
           port: 443
 
+  realmImport:
+    enabled: true
+    podSelector:
+      app: keycloak-realm-import
+    egress:
+      # DNS resolution via CoreDNS
+      - ports:
+        - protocol: UDP
+          port: 5353
+        - protocol: TCP
+          port: 5353
+        to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+      # PostgreSQL — realm import writes realm data to the database
+      - ports:
+        - protocol: TCP
+          port: 5432
+        to:
+        - podSelector:
+            matchLabels:
+              app: postgresql-db
+      # Kubernetes API server — reads secrets referenced in KeycloakRealmImport CR
+      - ports:
+        - protocol: TCP
+          port: 6443
+      # Keycloak HTTPS API — admin API calls during realm import
+      - ports:
+        - protocol: TCP
+          port: 8443
+        to:
+        - podSelector:
+            matchLabels:
+              app: keycloak
+              app.kubernetes.io/instance: keycloak
+              app.kubernetes.io/managed-by: keycloak-operator
+
   postgresql:
     enabled: true
     ingress:
-      # Accept connections only from Keycloak pods
+      # Accept connections from Keycloak pods and realm import jobs
       - ports:
         - protocol: TCP
           port: 5432
@@ -60,6 +98,9 @@ networkPolicy:
               app: keycloak
               app.kubernetes.io/instance: keycloak
               app.kubernetes.io/managed-by: keycloak-operator
+        - podSelector:
+            matchLabels:
+              app: keycloak-realm-import
     egress:
       # DNS resolution via CoreDNS
       - ports:
