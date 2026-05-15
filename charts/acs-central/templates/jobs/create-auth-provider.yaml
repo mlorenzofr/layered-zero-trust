@@ -86,7 +86,7 @@ spec:
                 exit 0
               fi
 
-              ACS_CENTRAL_HOSTNAME="$(oc get route central -n stackrox -o jsonpath='{.spec.host}')"
+              ACS_CENTRAL_HOSTNAME="$(oc get route central-reencrypt -n stackrox -o jsonpath='{.spec.host}' 2>/dev/null || oc get route central -n stackrox -o jsonpath='{.spec.host}')"
               echo "ACS Central hostname: $ACS_CENTRAL_HOSTNAME"
 
               cat > /tmp/oidc-config.json << 'OIDCEOF'
