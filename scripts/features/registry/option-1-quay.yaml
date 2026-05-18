@@ -41,6 +41,8 @@ clusterGroup:
       overrides:
         - name: job.image
           value: "registry.redhat.io/openshift4/ose-cli-rhel9:latest"
+        - name: job.resources.limits.memory
+          value: "512Mi"
 
   merge_into_applications:
     supply-chain:
