@@ -36,13 +36,29 @@ In our demo, we will use a number of additional ZTVP components. These component
 * [Multicloud Object Gateway](https://docs.redhat.com/en/documentation/red_hat_openshift_container_storage/4.8/html/managing_hybrid_and_multicloud_resources/index) is a data service for OpenShift that provides an S3-compatible object storage. In our case, this component is necessary to provide a storage system to Quay.
 * [Red Hat OpenShift Pipelines](https://docs.redhat.com/en/documentation/red_hat_openshift_pipelines/1.20) is a cloud-native CI/CD solution built on the Tekton framework. We will use this product to automate our secure supply chain process, but you could use your own CI/CD solution if one exists.
 
+### Enabling this Use Case
+
+To configure the appropriate values in the [values-hub.yaml](../values-hub.yaml) file, we can be use the [gen-feature-variants script](../scripts/gen-feature-variants.md).
+
+For the Secure Supply Chain use case, the command would be:
+
+```shell
+python3 scripts/gen-feature-variants.py --base values-hub.yaml --features supply-chain --registry-option <id>
+```
+
+Where `<id>` is one of the options available in _Bring Your Own (BYO) Container Registry_:
+
+1. Embedded Quay Registry
+2. External Registry
+3. Embedded Internal Registry
+
 ## Bring Your Own (BYO) Container Registry
 
 By default, ZTVP deploys a built-in Red Hat Quay registry. However, you can use your own container registry (e.g., quay.io, Docker Hub, GitHub Container Registry, or a private registry) instead.
 
 ### Configuration Steps
 
-1. **Disable built-in Quay registry** (optional - if not using Quay): Comment out the Quay-related applications in `values-hub.yaml`: `quay-enterprise` namespace, `quay-operator` subscription, and `quay-registry` application.
+1. **Disable built-in Quay registry** (optional - if not using Quay): Comment out the Quay-related applications in `values-hub.yaml`: `quay-enterprise` namespace, `quay-operator` subscription, and `quay-registry` application. Remove the `applications.supply-chain.overrides.quay.enabled` and `applications.supply-chain.overrides.registry.tlsVerify` settings.
 
 2. **Configure registry credentials in Vault** (**BYO registry only**): Per VP rule, add your registry credentials to `~/values-secrets.yaml` (or `~/values-secret.yaml` / `~/values-secret-layered-zero-trust.yaml` per VP lookup order):
 
@@ -213,7 +229,7 @@ resourceHealthChecks:
       return hs
 ```
 
-## Pipeline
+## Automated Secure Supply Chain Pipeline
 
 To build and certify the application, we will use _Red Hat OpenShift Pipelines_.
 
