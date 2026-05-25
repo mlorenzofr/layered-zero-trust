@@ -496,6 +496,8 @@ clusterGroup:
       project: hub
       chart: rhbk
       chartVersion: 0.0.*
+      extraValueFiles:
+        - /overrides/values-keycloak-network-policy.yaml
       annotations:
         argocd.argoproj.io/sync-wave: "35"
       # SPIFFE Identity Provider is enabled by default in the chart.
