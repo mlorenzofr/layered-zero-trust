@@ -403,6 +403,11 @@ clusterGroup:
     #   chartVersion: 0.1.*
     #   annotations:
     #     argocd.argoproj.io/sync-wave: "41"  # Deploy after NooBaa storage backend
+    #   overrides:
+    #   - name: job.image
+    #     value: "registry.redhat.io/openshift4/ose-cli-rhel9:latest"
+    #   - name: job.resources.limits.memory
+    #     value: "512Mi"
     # RHTAS with SPIFFE Integration
     # COMMENTED OUT: Uncomment to enable RHTAS with SPIFFE and Email issuers
     # Depends on: Vault, SPIRE, Keycloak (for Email OIDC issuer if used)
@@ -550,6 +555,17 @@ clusterGroup:
         # before the supply-chain pipeline runs (avoids ImagePullBackOff on first install)
         # - name: app.seedImage.enabled
         #   value: "true"
+    # Tekton Chains - Configures Tekton Chains for supply chain security
+    # Requires: OpenShift Pipelines operator (openshift-pipelines subscription)
+    # Requires: RHTAS (trusted-artifact-signer) for keyless signing via SPIFFE
+    # Uses a PostSync Job to patch the operator-managed TektonConfig CR
+    # tekton-chains:
+    #   name: tekton-chains
+    #   project: hub
+    #   path: charts/tekton-chains
+    #   annotations:
+    #     argocd.argoproj.io/sync-wave: "47"
+    #
     # Secure Supply Chain - Uncomment to enable (required for Option 1, 2, or 3 registry flows in docs)
     # supply-chain:
     #  name: supply-chain
