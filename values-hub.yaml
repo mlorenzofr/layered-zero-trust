@@ -345,7 +345,7 @@ clusterGroup:
       namespace: keycloak-system
       project: hub
       chart: rhbk
-      chartVersion: 0.0.*
+      chartVersion: 0.0.10
       extraValueFiles:
       - /overrides/values-keycloak-network-policy.yaml
       annotations:
