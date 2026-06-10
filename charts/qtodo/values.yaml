@@ -49,6 +49,8 @@ app:
 
   oidc:
     enabled: false  # Will be enabled when SPIFFE is enabled
+    # OIDC Provider: keycloak or entraid
+    provider: "keycloak"
     authServerUrl: ""
     realm: "ztvp"
     clientId: "qtodo-app"
@@ -63,6 +65,12 @@ app:
       enabled: false
       name: "oidc-client-secret"
       vaultPath: "secret/data/apps/qtodo/qtodo-oidc-client"
+    # Entra ID specific configuration
+    entraid:
+      tenantId: ""
+      # Azure audience for federated credential
+      # Format: api://<client-id>
+      audience: ""
 
   # Route configuration
   route:
