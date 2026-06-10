@@ -21,6 +21,103 @@ We recommend the **Client Assertion** method, which aligns with zero-trust princ
 
 #### Qtodo Azure setup with Client Assertion
 
+You can configure qtodo with Azure Entra ID using either the **Azure Portal** (GUI) or **Azure CLI** (automated).
+
+##### Option A: Automated Setup with Azure CLI
+
+For a quick, automated setup, use the provided script:
+
+```bash
+# Set your environment variables
+export CLUSTER_DOMAIN="apps.ztvp.example.com"
+export QTODO_REDIRECT_URI="https://qtodo-qtodo.apps.ztvp.example.com/"
+
+# Run the setup script
+./docs/oidc/scripts/setup-qtodo-entraid.sh
+```
+
+The script will:
+1. Create the app registration
+2. Configure the Application ID URI
+3. Set up federated credentials with SPIFFE
+4. Add optional claims
+5. Disable user assignment requirement
+6. Output the values-hub.yaml configuration
+
+**Manual Azure CLI Commands:**
+
+If you prefer to run commands individually:
+
+```bash
+# Login to Azure
+az login
+
+# Get your tenant ID
+export TENANT_ID=$(az account show --query tenantId -o tsv | tr -d '\t\n\r')
+
+# Set configuration
+export APP_NAME="qtodo"
+export CLUSTER_DOMAIN="apps.ztvp.example.com"
+export QTODO_REDIRECT_URI="https://qtodo-qtodo.${CLUSTER_DOMAIN}/"
+export SPIRE_ISSUER="https://spire-spiffe-oidc-discovery-provider.${CLUSTER_DOMAIN}"
+export SPIFFE_SUBJECT="spiffe://${CLUSTER_DOMAIN}/ns/qtodo/sa/qtodo"
+
+# Create app registration
+export CLIENT_ID=$(az ad app create \
+    --display-name="${APP_NAME}" \
+    --web-redirect-uris="${QTODO_REDIRECT_URI}" \
+    --enable-id-token-issuance \
+    --query appId \
+    -o tsv | tr -d '\t\n\r')
+
+echo "Client ID: ${CLIENT_ID}"
+
+# Get object ID
+export OBJECT_ID=$(az ad app show --id="${CLIENT_ID}" --query id -o tsv | tr -d '\t\n\r')
+
+# Set Application ID URI
+export APP_ID_URI="api://${CLIENT_ID}"
+az ad app update --id="${CLIENT_ID}" --identifier-uris="${APP_ID_URI}"
+
+# Create federated credential
+az ad app federated-credential create \
+    --id="${CLIENT_ID}" \
+    --parameters "{
+        \"name\": \"qtodo-spiffe-federation\",
+        \"issuer\": \"${SPIRE_ISSUER}\",
+        \"subject\": \"${SPIFFE_SUBJECT}\",
+        \"audiences\": [\"${APP_ID_URI}\"],
+        \"description\": \"SPIFFE workload identity for qtodo application\"
+    }"
+
+# Add optional claims
+az rest --method PATCH \
+    --uri "https://graph.microsoft.com/v1.0/applications/${OBJECT_ID}" \
+    --headers 'Content-Type=application/json' \
+    --body '{
+        "optionalClaims": {
+            "idToken": [
+                {"name": "email", "source": null, "essential": false, "additionalProperties": []},
+                {"name": "preferred_username", "source": null, "essential": false, "additionalProperties": []}
+            ]
+        }
+    }'
+
+# Create service principal and disable assignment requirement
+export SP_ID=$(az ad sp create --id="${CLIENT_ID}" --query id -o tsv | tr -d '\t\n\r')
+az rest --method PATCH \
+    --uri "https://graph.microsoft.com/v1.0/servicePrincipals/${SP_ID}" \
+    --headers 'Content-Type=application/json' \
+    --body '{"appRoleAssignmentRequired": false}'
+
+echo "Setup complete!"
+echo "Tenant ID: ${TENANT_ID}"
+echo "Client ID: ${CLIENT_ID}"
+echo "App ID URI: ${APP_ID_URI}"
+```
+
+##### Option B: Manual Setup via Azure Portal
+
 ##### Step 1: Create the App Registration
 
 1. Go to [Azure Portal](https://portal.azure.com)
