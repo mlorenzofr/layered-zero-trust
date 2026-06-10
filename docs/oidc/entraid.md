@@ -252,21 +252,46 @@ In the `values-hub.yaml` file, add the following configuration for the qtodo app
 
 #### How it works
 
-When using client assertion with Entra ID:
+When using client assertion with Entra ID for a **web application**, there are TWO authentication flows:
+
+##### User Authentication (Web Browser)
+
+1. **User visits qtodo**: User opens `https://qtodo-qtodo.apps.example.com` in their web browser
+2. **Redirect to Entra ID**: qtodo redirects the browser to Entra ID's authorization endpoint
+3. **User authenticates**: User enters credentials (username/password, MFA, etc.) in Entra ID
+4. **Redirect back with code**: Entra ID redirects back to qtodo with an authorization code
+5. **Token exchange**: qtodo exchanges the code for tokens (see Backend Authentication below)
+6. **User logged in**: User can now access qtodo with an active session
+
+**This is standard OAuth 2.0 authorization code flow - the SAME as with Keycloak.**
+
+##### Backend Authentication (Client Assertion)
+
+When qtodo needs to exchange the authorization code for tokens:
 
 1. **SPIRE issues JWT token**: The SPIRE agent running on the qtodo pod issues a JWT token (SVID) with:
    * `iss` (issuer): Your SPIRE OIDC Discovery Provider URL
    * `sub` (subject): The qtodo workload's SPIFFE ID
    * `aud` (audience): The Application ID URI (`api://<CLIENT_ID>`)
 
-2. **Qtodo uses JWT for authentication**: Instead of a client secret, qtodo presents the SPIFFE JWT token to Entra ID when requesting access tokens
+2. **Qtodo uses JWT for authentication**: Instead of a client secret, qtodo presents the SPIFFE JWT token to Entra ID when requesting access tokens:
+   ```
+   POST /token
+   grant_type=authorization_code
+   code={AUTHORIZATION_CODE}
+   client_id={CLIENT_ID}
+   client_assertion={SPIFFE_JWT}
+   client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+   ```
 
 3. **Entra ID validates the token**: Azure verifies:
    * The JWT is signed by the trusted SPIRE server (via OIDC discovery)
    * The subject matches a registered federated credential
    * The audience matches the configured value
 
-4. **Access granted**: If validation succeeds, Entra ID issues an access token for the qtodo application
+4. **Access granted**: If validation succeeds, Entra ID issues tokens (ID token, access token, refresh token)
+
+**Key Point**: Client assertion replaces the client secret in the token exchange step. Users still log in via browser redirect - nothing changes from their perspective.
 
 This eliminates the need to store and rotate client secrets, reducing the attack surface and following zero-trust principles.
 
