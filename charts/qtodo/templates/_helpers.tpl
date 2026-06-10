@@ -44,6 +44,8 @@ Generate the JWT Audience for SPIFFE authentication
 {{- print .Values.app.oidc.entraid.audience }}
 {{- else if not .Values.app.oidc.clientId }}
 {{- fail "app.oidc.clientId is required when using Entra ID provider without explicit audience" }}
+{{- else if hasPrefix "api://" .Values.app.oidc.clientId }}
+{{- print .Values.app.oidc.clientId }}
 {{- else }}
 {{- printf "api://%s" .Values.app.oidc.clientId }}
 {{- end }}
