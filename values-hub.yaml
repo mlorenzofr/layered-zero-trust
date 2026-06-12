@@ -470,6 +470,8 @@ clusterGroup:
       argoProject: hub
       chart: ztwim
       chartVersion: 0.1.*
+      extraValueFiles:
+        - /overrides/values-ztwim-network-policy.yaml
       annotations:
         argocd.argoproj.io/sync-wave: "30"
       overrides:
