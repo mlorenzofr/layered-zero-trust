@@ -35,8 +35,10 @@ Usage:
 import argparse
 import copy
 import os
+import re
 import sys
 from collections import OrderedDict
+from urllib.parse import urlparse
 
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
@@ -105,24 +107,22 @@ def resolve_dependencies(requested, feature_defs):
     return list(resolved.keys())
 
 
-def _namespace_key(item):
-    """Extract the unique key from a namespace list entry (string or mapping)."""
-    if isinstance(item, str):
-        return item
-    if isinstance(item, dict):
-        keys = list(item.keys())
-        return keys[0] if keys else None
-    return None
+def _merge_namespace_dicts(base_dict, fragment_dict):
+    """Merge namespace entries from fragment_dict into base_dict.
 
-
-def _merge_namespace_lists(base_list, fragment_list):
-    """Append namespace entries from fragment_list that are not already in base_list."""
-    existing = {_namespace_key(item) for item in base_list}
-    for item in fragment_list:
-        key = _namespace_key(item)
-        if key not in existing:
-            base_list.append(item)
-            existing.add(key)
+    Namespaces are now dictionaries where keys are namespace names and values
+    are their configurations (or empty/None for namespaces without config).
+    """
+    for ns_name, ns_config in fragment_dict.items():
+        if ns_name not in base_dict:
+            # Add new namespace
+            base_dict[ns_name] = copy.deepcopy(ns_config) if ns_config else None
+        elif ns_config:
+            # Merge configuration for existing namespace
+            if base_dict[ns_name] is None:
+                base_dict[ns_name] = copy.deepcopy(ns_config)
+            elif isinstance(base_dict[ns_name], dict) and isinstance(ns_config, dict):
+                _deep_merge_mappings(base_dict[ns_name], copy.deepcopy(ns_config))
 
 
 def _is_named_list(lst):
@@ -166,7 +166,7 @@ def _deep_merge_mappings(base, overlay):
             base[key] = overlay[key]
 
 
-def _apply_merge_into(base_apps, merge_into_spec):
+def _apply_merge_into(base_apps, merge_into_spec, vault_jwt_roles_accumulator):
     """Handle merge_into_applications: merge fragment data into existing app configs.
 
     merge_into_spec is a mapping like:
@@ -179,8 +179,27 @@ def _apply_merge_into(base_apps, merge_into_spec):
     For each target app, recursively merge into the existing app config.
     Named lists (items with a 'name' key) use upsert semantics; plain lists
     are appended.
+
+    Special handling for vault JWT roles: instead of merging them into
+    clusterGroup.applications.vault, accumulate them in vault_jwt_roles_accumulator
+    for later merging into the overrides/values-vault-jwt.yaml structure.
     """
     for app_name, additions in merge_into_spec.items():
+        # Special handling for vault JWT roles
+        if app_name == "vault" and "jwt" in additions:
+            jwt_config = additions.get("jwt", {})
+            if "roles" in jwt_config:
+                # Accumulate JWT roles for later merging into vault
+                # override file
+                vault_jwt_roles_accumulator.extend(copy.deepcopy(jwt_config["roles"]))
+                # Remove jwt from additions to prevent it from being
+                # merged into app config
+                additions = copy.deepcopy(additions)
+                del additions["jwt"]
+                # If nothing else to merge, continue to next app
+                if not additions:
+                    continue
+
         if app_name not in base_apps:
             print(
                 f"WARNING: merge_into_applications target '{app_name}'"
@@ -211,14 +230,20 @@ def _insert_key_before(mapping, new_key, new_value, before_key):
         mapping[k] = v
 
 
-def merge_fragment(base, fragment):
-    """Merge a single feature fragment into the base YAML tree."""
+def merge_fragment(base, fragment, vault_jwt_roles_accumulator):
+    """Merge a single feature fragment into the base YAML tree.
+
+    vault_jwt_roles_accumulator is a list that collects JWT roles from all fragments
+    for later merging into the vault override file.
+    """
     if fragment is None:
         return
 
     for top_key in fragment:
         if top_key == "clusterGroup":
-            _merge_cluster_group(base, fragment["clusterGroup"])
+            _merge_cluster_group(
+                base, fragment["clusterGroup"], vault_jwt_roles_accumulator
+            )
         elif top_key in base and isinstance(base[top_key], dict):
             _deep_merge_mappings(base[top_key], copy.deepcopy(fragment[top_key]))
         elif top_key not in base:
@@ -232,13 +257,26 @@ def merge_fragment(base, fragment):
             base[top_key] = copy.deepcopy(fragment[top_key])
 
 
-def _merge_cluster_group(base, frag_cg):
-    """Merge clusterGroup sections with type-aware strategies."""
+def _merge_cluster_group(base, frag_cg, vault_jwt_roles_accumulator):
+    """Merge clusterGroup sections with type-aware strategies.
+
+    vault_jwt_roles_accumulator is a list that collects JWT roles from all fragments
+    for later merging into the vault override file.
+    """
     base_cg = base.setdefault("clusterGroup", {})
 
     if "namespaces" in frag_cg:
-        base_ns = base_cg.setdefault("namespaces", [])
-        _merge_namespace_lists(base_ns, frag_cg["namespaces"])
+        base_ns = base_cg.setdefault("namespaces", {})
+        # Ensure namespaces is a dict
+        if not isinstance(base_ns, dict):
+            print(
+                f"WARNING: base namespaces is not a dict (type: {type(base_ns)}), "
+                "converting to empty dict",
+                file=sys.stderr,
+            )
+            base_ns = {}
+            base_cg["namespaces"] = base_ns
+        _merge_namespace_dicts(base_ns, frag_cg["namespaces"])
 
     if "subscriptions" in frag_cg:
         base_subs = base_cg.setdefault("subscriptions", {})
@@ -254,20 +292,25 @@ def _merge_cluster_group(base, frag_cg):
 
     if "merge_into_applications" in frag_cg:
         base_apps = base_cg.get("applications", {})
-        _apply_merge_into(base_apps, frag_cg["merge_into_applications"])
+        _apply_merge_into(
+            base_apps, frag_cg["merge_into_applications"], vault_jwt_roles_accumulator
+        )
 
 
 def validate_output(data):
     """Run basic sanity checks on the merged YAML tree."""
     cg = data.get("clusterGroup", {})
 
-    ns_list = cg.get("namespaces", [])
-    seen = set()
-    for item in ns_list:
-        key = _namespace_key(item)
-        if key in seen:
-            print(f"WARNING: duplicate namespace '{key}'", file=sys.stderr)
-        seen.add(key)
+    ns_dict = cg.get("namespaces", {})
+    if isinstance(ns_dict, dict):
+        # Namespaces are now a dict, so duplicate checking is implicit
+        # (dict keys are unique by definition)
+        pass
+    else:
+        print(
+            f"WARNING: namespaces is not a dict (type: {type(ns_dict)})",
+            file=sys.stderr,
+        )
 
     apps = cg.get("applications", {})
     for app_name, app_val in apps.items():
@@ -284,14 +327,8 @@ def validate_output(data):
             if name:
                 override_names.add(name)
 
-    vault = apps.get("vault", {})
-    jwt_roles = vault.get("jwt", {}).get("roles", [])
-    role_names = set()
-    for role in jwt_roles:
-        name = role.get("name")
-        if name in role_names:
-            print(f"WARNING: duplicate vault JWT role '{name}'", file=sys.stderr)
-        role_names.add(name)
+    # Vault JWT roles are now in overrides/values-vault-jwt.yaml
+    # No need to validate them here as they're not in the generated variant
 
 
 def _substitute_repository_placeholders(base, org=None, image_name=None):
@@ -304,6 +341,88 @@ def _substitute_repository_placeholders(base, org=None, image_name=None):
     base["global"]["registry"]["repository"] = repo
 
 
+GIT_REPO_PLACEHOLDER = "REPLACE_WITH_GIT_REPO_URL"
+GIT_HOST_PLACEHOLDER = "REPLACE_WITH_GIT_HOST"
+GIT_AUTH_TYPE_PLACEHOLDER = "REPLACE_WITH_GIT_AUTH_TYPE"
+
+SSH_URL_RE = re.compile(r"^[\w.-]+@([\w.-]+):")
+
+
+def _parse_git_repo_url(git_repo_url):
+    """Derive (host, auth_type) from a Git repository URL.
+
+    HTTPS URLs  -> host = "https://github.com",  auth_type = "https"
+    SSH URLs    -> host = "github.com",           auth_type = "ssh"
+    """
+    m = SSH_URL_RE.match(git_repo_url)
+    if m:
+        return m.group(1), "ssh"
+    parsed = urlparse(git_repo_url)
+    scheme = parsed.scheme or "https"
+    hostname = parsed.hostname or ""
+    return f"{scheme}://{hostname}", "https"
+
+
+def _substitute_git_overrides(base, git_repo_url, git_host, git_auth_type):
+    """Replace git-related placeholders in supply-chain overrides."""
+    apps = base.get("clusterGroup", {}).get("applications", {})
+    sc = apps.get("supply-chain", {})
+    placeholder_map = {
+        "qtodo.repository": (GIT_REPO_PLACEHOLDER, git_repo_url),
+        "git.credentials.host": (GIT_HOST_PLACEHOLDER, git_host),
+        "git.credentials.authType": (GIT_AUTH_TYPE_PLACEHOLDER, git_auth_type),
+    }
+    for override in sc.get("overrides", []):
+        entry = placeholder_map.get(override.get("name"))
+        if entry and str(override.get("value")) == entry[0]:
+            override["value"] = entry[1]
+
+
+def _update_vault_jwt_override_file(override_file_path, new_roles):
+    """Update the vault JWT override file with new roles from feature fragments.
+
+    Merges new_roles into the vault_jwt_roles list in the override file.
+    Uses named list semantics (upsert by role name).
+    """
+    if not new_roles:
+        return
+
+    yaml = YAML()
+    yaml.preserve_quotes = True
+    yaml.default_flow_style = False
+    yaml.width = 4096
+
+    # Load existing override file
+    if os.path.isfile(override_file_path):
+        with open(override_file_path) as fh:
+            override_data = yaml.load(fh)
+    else:
+        # Create new structure if file doesn't exist
+        oidc_url = (
+            "https://spire-spiffe-oidc-discovery-provider"
+            ".zero-trust-workload-identity-manager.svc.cluster.local"
+        )
+        override_data = {
+            "vault_jwt_config": True,
+            "vault_jwt_policies": [],
+            "vault_jwt_roles": [],
+            "oidc_discovery_url": oidc_url,
+        }
+
+    # Get existing roles list
+    existing_roles = override_data.setdefault("vault_jwt_roles", [])
+
+    # Merge new roles using named list semantics
+    _merge_named_lists(existing_roles, new_roles)
+
+    # Write back to file
+    with open(override_file_path, "w") as fh:
+        yaml.dump(override_data, fh)
+
+    role_names = [r.get("name", "unknown") for r in new_roles]
+    print(f"  Updated {override_file_path} with roles: {', '.join(role_names)}")
+
+
 def generate_variant(
     base_path,
     features_dir,
@@ -312,6 +431,7 @@ def generate_variant(
     output_path,
     org=None,
     image_name=None,
+    git_repo_url=None,
 ):
     """Load base, merge all feature fragments + registry option, write output."""
     yaml = YAML()
@@ -322,13 +442,16 @@ def generate_variant(
     with open(base_path) as fh:
         base = yaml.load(fh)
 
+    # Accumulator for vault JWT roles from feature fragments
+    vault_jwt_roles_accumulator = []
+
     for feat_name in resolved_features:
         frag_path = os.path.join(features_dir, f"{feat_name}.yaml")
         if not os.path.isfile(frag_path):
             print(f"ERROR: fragment file not found: {frag_path}", file=sys.stderr)
             sys.exit(1)
         fragment = load_yaml_file(frag_path)
-        merge_fragment(base, fragment)
+        merge_fragment(base, fragment, vault_jwt_roles_accumulator)
 
     if registry_fragment_path:
         if not os.path.isfile(registry_fragment_path):
@@ -338,10 +461,22 @@ def generate_variant(
             )
             sys.exit(1)
         registry_frag = load_yaml_file(registry_fragment_path)
-        merge_fragment(base, registry_frag)
+        merge_fragment(base, registry_frag, vault_jwt_roles_accumulator)
+
+    # Update vault JWT override file with roles from feature fragments
+    if vault_jwt_roles_accumulator:
+        repo_root = os.path.dirname(SCRIPT_DIR)
+        override_file_path = os.path.join(
+            repo_root, "overrides", "values-vault-jwt.yaml"
+        )
+        _update_vault_jwt_override_file(override_file_path, vault_jwt_roles_accumulator)
 
     if org or image_name:
         _substitute_repository_placeholders(base, org=org, image_name=image_name)
+
+    if git_repo_url:
+        git_host, git_auth_type = _parse_git_repo_url(git_repo_url)
+        _substitute_git_overrides(base, git_repo_url, git_host, git_auth_type)
 
     validate_output(base)
     cg = base.get("clusterGroup")
@@ -360,7 +495,8 @@ def build_output_name(features, registry_option=None):
     """Construct the output filename from features and optional registry option."""
     if "supply-chain" in features:
         label = REGISTRY_LABELS.get(registry_option, f"option-{registry_option}")
-        return f"values-hub-supply-chain-{label}.yaml"
+        suffix = "-protected-repos" if "protected-repos" in features else ""
+        return f"values-hub-supply-chain-{label}{suffix}.yaml"
     return f"values-hub-{'-'.join(features)}.yaml"
 
 
@@ -394,6 +530,12 @@ def main():
         "--outdir",
         default=None,
         help="Output directory (default: /tmp)",
+    )
+    parser.add_argument(
+        "--git-repo",
+        default=None,
+        help="Private Git repository URL for protected-repos feature "
+        "(e.g. https://github.com/your-org/qtodo.git)",
     )
     parser.add_argument(
         "--list-features",
@@ -455,11 +597,24 @@ def main():
         )
         sys.exit(1)
 
+    needs_git_repo = any(
+        feature_defs.get(f, {}).get("git_repo_required") for f in resolved
+    )
+    if needs_git_repo and not args.git_repo:
+        print(
+            "ERROR: --git-repo is required when protected-repos feature is enabled "
+            "(e.g. --git-repo https://github.com/your-org/qtodo.git)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     print(f"Base:     {base}")
     print(f"Output:   {outdir}")
     print(f"Features: {' -> '.join(resolved)}")
     if args.registry_option:
         print(f"Registry: option {args.registry_option}")
+    if args.git_repo:
+        print(f"Git repo: {args.git_repo}")
 
     if args.registry_option == "all":
         for opt_num in [1, 2, 3]:
@@ -475,7 +630,14 @@ def main():
             out_name = build_output_name(requested, opt_num)
             out_path = os.path.join(outdir, out_name)
             generate_variant(
-                base, FEATURES_DIR, resolved, reg_path, out_path, org, image_name
+                base,
+                FEATURES_DIR,
+                resolved,
+                reg_path,
+                out_path,
+                org,
+                image_name,
+                git_repo_url=args.git_repo,
             )
     else:
         reg_path = None
@@ -496,7 +658,14 @@ def main():
         )
         out_path = os.path.join(outdir, out_name)
         generate_variant(
-            base, FEATURES_DIR, resolved, reg_path, out_path, org, image_name
+            base,
+            FEATURES_DIR,
+            resolved,
+            reg_path,
+            out_path,
+            org,
+            image_name,
+            git_repo_url=args.git_repo,
         )
 
     if args.registry_option and org and image_name:

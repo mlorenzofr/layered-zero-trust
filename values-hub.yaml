@@ -51,69 +51,76 @@ clusterGroup:
   name: hub
   isHubCluster: true
   namespaces:
-    - open-cluster-management
-    - vault
-    - qtodo
-    - golang-external-secrets
-    - keycloak-system:
-        operatorGroup: true
-        targetNamespace: keycloak-system
-    - cert-manager
-    - cert-manager-operator:
-        operatorGroup: true
-        targetNamespace: cert-manager-operator
+    open-cluster-management:
+    vault:
+    qtodo:
+    external-secrets-operator:
+      operatorGroup: true
+      targetNamespaces: []
+    external-secrets:
+    keycloak-system:
+      operatorGroup: true
+      targetNamespace: keycloak-system
+    cert-manager:
+    cert-manager-operator:
+      operatorGroup: true
+      targetNamespace: cert-manager-operator
     # Layer 1: Storage and Registry
     # Required for RHTPA and QUAY (provides NooBaa object storage backend)
-    # - openshift-storage:
-    #     operatorGroup: true
-    #     targetNamespace: openshift-storage
-    #     annotations:
-    #       openshift.io/cluster-monitoring: "true"
-    #       argocd.argoproj.io/sync-wave: "26"  # Propagated to OperatorGroup by framework
-    # - quay-enterprise:
-    #     annotations:
-    #       argocd.argoproj.io/sync-wave: "32"  # Create before NooBaa and all Quay components
-    #     labels:
-    #       openshift.io/cluster-monitoring: "true"
+    # openshift-storage:
+    #   operatorGroup: true
+    #   targetNamespace: openshift-storage
+    #   annotations:
+    #     openshift.io/cluster-monitoring: "true"
+    #     argocd.argoproj.io/sync-wave: "26"  # Propagated to OperatorGroup by framework
+    # quay-enterprise:
+    #   annotations:
+    #     argocd.argoproj.io/sync-wave: "32"  # Create before NooBaa and all Quay components
+    #   labels:
+    #     openshift.io/cluster-monitoring: "true"
     # RHTAS namespace (required when RHTAS application is enabled)
     # COMMENTED OUT: Uncomment to enable RHTAS with SPIFFE signing
-    # - trusted-artifact-signer:
-    #     annotations:
-    #       argocd.argoproj.io/sync-wave: "32"  # Auto-created by RHTAS operator
-    #     labels:
-    #       openshift.io/cluster-monitoring: "true"
-    # - rhtpa-operator:
-    #     operatorGroup: true
-    #     targetNamespace: rhtpa-operator
-    #     annotations:
-    #       argocd.argoproj.io/sync-wave: "26"  # Create before operator subscription
-    # - trusted-profile-analyzer:
-    #     annotations:
-    #       argocd.argoproj.io/sync-wave: "32"  # Create before RHTPA components
-    #     labels:
-    #       openshift.io/cluster-monitoring: "true"
-    - zero-trust-workload-identity-manager:
-        operatorGroup: true
-        targetNamespace: zero-trust-workload-identity-manager
-    - openshift-compliance:
-        operatorGroup: true
-        targetNamespace: openshift-compliance
-        annotations:
-          openshift.io/cluster-monitoring: "true"
+    # trusted-artifact-signer:
+    #   annotations:
+    #     argocd.argoproj.io/sync-wave: "32"  # Auto-created by RHTAS operator
+    #   labels:
+    #     openshift.io/cluster-monitoring: "true"
+    # rhtpa-operator:
+    #   operatorGroup: true
+    #   targetNamespace: rhtpa-operator
+    #   annotations:
+    #     argocd.argoproj.io/sync-wave: "26"  # Create before operator subscription
+    # trusted-profile-analyzer:
+    #   annotations:
+    #     argocd.argoproj.io/sync-wave: "32"  # Create before RHTPA components
+    #   labels:
+    #     openshift.io/cluster-monitoring: "true"
+    zero-trust-workload-identity-manager:
+      operatorGroup: true
+      targetNamespace: zero-trust-workload-identity-manager
+    openshift-compliance:
+      operatorGroup: true
+      targetNamespace: openshift-compliance
+      annotations:
+        openshift.io/cluster-monitoring: "true"
     # Secure Supply Chain: Uncomment to enable OpenShift Pipelines
-    # - openshift-pipelines
+    # openshift-pipelines
     #
     # Red Hat Advanced Cluster Security (RHACS/StackRox) - Uncomment to enable
-    - stackrox:
-        operatorGroup: true
-        labels:
-          openshift.io/cluster-monitoring: "true"
+    stackrox:
+      operatorGroup: true
+      labels:
+        openshift.io/cluster-monitoring: "true"
   subscriptions:
     acm:
       name: advanced-cluster-management
       namespace: open-cluster-management
       channel: release-2.15
       catalogSource: redhat-operators
+    eso:
+      name: openshift-external-secrets-operator
+      namespace: external-secrets-operator
+      channel: stable-v1
     cert-manager:
       name: openshift-cert-manager-operator
       namespace: cert-manager-operator
@@ -183,12 +190,14 @@ clusterGroup:
     #   catalogSource: redhat-operators
     #   annotations:
     #     argocd.argoproj.io/sync-wave: "27"  # Install after OperatorGroup (26), before applications
-  projects:
+  argoProjects:
     - hub
   # Explicitly mention the cluster-state based overrides we plan to use for this pattern.
   # We can use self-referential variables because the chart calls the tpl function with these variables defined
   sharedValueFiles:
     - '/overrides/values-{{ $.Values.global.clusterPlatform }}.yaml'
+    - '/overrides/values-{{ $.Values.global.clusterVersion }}-{{ $.Values.clusterGroup.name }}.yaml'
+    - '/overrides/values-vault-jwt.yaml'
   # sharedValueFiles is a flexible mechanism that will add the listed valuefiles to every app defined in the
   # applications section. We intend this to supplement and possibly even replace previous "magic" mechanisms, though
   # we do not at present have a target date for removal.
@@ -209,7 +218,7 @@ clusterGroup:
     ztvp-certificates:
       name: ztvp-certificates
       namespace: openshift-config
-      project: hub
+      argoProject: hub
       path: charts/ztvp-certificates
       annotations:
         argocd.argoproj.io/sync-wave: "21"
@@ -228,7 +237,7 @@ clusterGroup:
       #   - Additional CA certificates (additionalCertificates array)
       #   - Automatic rollout restart for consuming applications
       extraValueFiles:
-        - /overrides/values-ztvp-certificates.yaml
+        - '/overrides/values-ztvp-certificates.yaml'
         - '/overrides/values-ztvp-certificates-{{ $.Values.global.clusterPlatform }}.yaml'
       overrides:
         # Disable Job TTL to prevent ArgoCD OutOfSync when Kubernetes deletes completed Jobs
@@ -274,9 +283,9 @@ clusterGroup:
     acm:
       name: acm
       namespace: open-cluster-management
-      project: hub
+      argoProject: hub
       chart: acm
-      chartVersion: 0.1.*
+      chartVersion: 0.2.*
       annotations:
         argocd.argoproj.io/sync-wave: "5"
       ignoreDifferences:
@@ -290,7 +299,7 @@ clusterGroup:
           value: none
     acm-managed-clusters:
       name: acm-managed-clusters
-      project: hub
+      argoProject: hub
       path: charts/acm-managed-clusters
       annotations:
         argocd.argoproj.io/sync-wave: "10"
@@ -305,7 +314,7 @@ clusterGroup:
       namespace: openshift-compliance
       annotations:
         argocd.argoproj.io/sync-wave: '1'
-      project: hub
+      argoProject: hub
       chart: ocp-compliance-scanning
       chartVersion: 0.0.*
       overrides:
@@ -317,80 +326,20 @@ clusterGroup:
     vault:
       name: vault
       namespace: vault
-      project: hub
+      argoProject: hub
       chart: hashicorp-vault
       chartVersion: 0.1.*
       extraValueFiles:
         - /overrides/values-vault-network-policy.yaml
       annotations:
         argocd.argoproj.io/sync-wave: "25"
-      # Custom Vault policies for least-privilege access
-      # Each application gets access only to its specific secrets path
-      #
-      # TWO types of policies needed:
-      # 1. <prefix>-k8s-secret - for Kubernetes auth (ClusterSecretStore/ExternalSecrets)
-      # 2. <prefix>-jwt-secret - for JWT/SPIFFE auth (application workloads)
-      #
-      # NOTE: K8s auth policies are auto-created by Ansible from vaultPrefixes
-      # JWT auth policies below are manually defined for apps that need direct Vault access
-      policies:
-        # ============================================================
-        # JWT/SPIFFE Auth Policies (for application workloads)
-        # These are used by apps authenticating via SPIFFE JWT tokens
-        # Only define policies for apps that need direct Vault access
-        # K8s auth policies (<prefix>-k8s-secret) are auto-created by Ansible
-        # ============================================================
-        - name: apps-qtodo-jwt-secret
-          policy: |
-            path "secret/data/apps/qtodo/*" {
-              capabilities = ["read"]
-            }
-        - name: hub-infra-rhtpa-jwt-secret
-          policy: |
-            path "secret/data/hub/infra/rhtpa/*" {
-              capabilities = ["read"]
-            }
-        - name: hub-supply-chain-jwt-secret
-          policy: |
-            path "secret/data/hub/infra/quay/*" {
-              capabilities = ["read"]
-            }
-            path "secret/data/hub/infra/registry/*" {
-              capabilities = ["read", "create", "update"]
-            }
-            path "secret/data/hub/infra/rhtpa/rhtpa-oidc-cli" {
-              capabilities = ["read"]
-            }
-      jwt:
-        enabled: true
-        oidcDiscoveryUrl: https://spire-spiffe-oidc-discovery-provider.zero-trust-workload-identity-manager.svc.cluster.local
-        oidcDiscoveryCa: /run/secrets/kubernetes.io/serviceaccount/service-ca.crt
-        defaultRole: qtodo
-        roles:
-          - name: qtodo
-            audience: https://keycloak.apps.{{ $.Values.global.clusterDomain }}/realms/ztvp
-            subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/qtodo/sa/qtodo
-            policies:
-              - apps-qtodo-jwt-secret
-          # RHTPA vault role
-          # - name: rhtpa
-          #   audience: rhtpa
-          #   subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/trusted-profile-analyzer/sa/rhtpa
-          #   policies:
-          #     - hub-infra-rhtpa-jwt-secret
-          # Supply chain vault role (for Tekton pipelines; enable with supply-chain app / Option 3 or BYO registry)
-          # - name: supply-chain
-          #   audience: supply-chain
-          #   subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/{{ $.Values.global.pattern }}-hub/sa/pipeline
-          #   policies:
-          #     - hub-supply-chain-jwt-secret
     # Shared Object Storage Backend
     # Required for RHTPA and QUAY (provides S3-compatible storage via NooBaa MCG)
     # NooBaa MCG provides S3-compatible object storage for multiple applications
     # noobaa-mcg:
     #   name: noobaa-mcg
     #   namespace: openshift-storage
-    #   project: hub
+    #   argoProject: hub
     #   path: charts/noobaa-mcg
     #   annotations:
     #     argocd.argoproj.io/sync-wave: "36"  # Deploy after core services
@@ -398,7 +347,7 @@ clusterGroup:
     # quay-registry:
     #   name: quay-registry
     #   namespace: quay-enterprise
-    #   project: hub
+    #   argoProject: hub
     #   chart: quay
     #   chartVersion: 0.1.*
     #   annotations:
@@ -414,7 +363,7 @@ clusterGroup:
     # trusted-artifact-signer:
     #   name: trusted-artifact-signer
     #   namespace: trusted-artifact-signer
-    #   project: hub
+    #   argoProject: hub
     #   path: charts/rhtas-operator
     #   annotations:
     #     argocd.argoproj.io/sync-wave: "46"  # Deploy after dependencies
@@ -437,7 +386,7 @@ clusterGroup:
     # trusted-profile-analyzer:
     #   name: trusted-profile-analyzer
     #   namespace: trusted-profile-analyzer
-    #   project: hub
+    #   argoProject: hub
     #   path: charts/rhtpa-operator
     #   annotations:
     #     argocd.argoproj.io/sync-wave: "41"  # Create chart resources (OBC, DB, etc.)
@@ -482,18 +431,18 @@ clusterGroup:
     #     #   value: "false"
     #     # - name: rhtpa.modules.createImporters.importers.redhat-sboms.sbom.disabled
     #     #   value: "false"
-    golang-external-secrets:
-      name: golang-external-secrets
-      namespace: golang-external-secrets
-      project: hub
-      chart: golang-external-secrets
-      chartVersion: 0.1.*
+    openshift-external-secrets:
+      name: openshift-external-secrets
+      namespace: external-secrets
+      argoProject: hub
+      chart: openshift-external-secrets
+      chartVersion: 0.0.*
       annotations:
         argocd.argoproj.io/sync-wave: "30"
     rh-keycloak:
       name: rh-keycloak
       namespace: keycloak-system
-      project: hub
+      argoProject: hub
       chart: rhbk
       chartVersion: 0.0.*
       extraValueFiles:
@@ -510,7 +459,7 @@ clusterGroup:
     rh-cert-manager:
       name: rh-cert-manager
       namespace: cert-manager-operator
-      project: hub
+      argoProject: hub
       chart: ocp-certmanager
       chartVersion: 0.2.*
       annotations:
@@ -518,7 +467,7 @@ clusterGroup:
     zero-trust-workload-identity-manager:
       name: zero-trust-workload-identity-manager
       namespace: zero-trust-workload-identity-manager
-      project: hub
+      argoProject: hub
       chart: ztwim
       chartVersion: 0.1.*
       annotations:
@@ -529,7 +478,7 @@ clusterGroup:
     qtodo:
       name: qtodo
       namespace: qtodo
-      project: hub
+      argoProject: hub
       path: charts/qtodo
       annotations:
         argocd.argoproj.io/sync-wave: "38"
@@ -569,7 +518,7 @@ clusterGroup:
     # Secure Supply Chain - Uncomment to enable (required for Option 1, 2, or 3 registry flows in docs)
     # supply-chain:
     #  name: supply-chain
-    #  project: hub
+    #  argoProject: hub
     #  path: charts/supply-chain
     #  annotations:
     #    argocd.argoproj.io/sync-wave: "48"
@@ -577,6 +526,14 @@ clusterGroup:
     #    - kind: ServiceAccount
     #      jqPathExpressions:
     #        - .imagePullSecrets[]|select(.name | contains("-dockercfg-"))
+    #    - group: tekton.dev
+    #      kind: Task
+    #      jsonPointers:
+    #        - /spec/steps
+    #    - group: tekton.dev
+    #      kind: Pipeline
+    #      jsonPointers:
+    #        - /spec/tasks
     #  overrides:
     #    # Registry credentials are inherited from global.registry.
     #    # Only set app-specific overrides below.
@@ -601,12 +558,21 @@ clusterGroup:
     #    # Uncomment to auto-trigger a pipeline run on every ArgoCD sync
     #    # - name: pipelinerun.enabled
     #    #   value: "true"
+    #    # Protected repository credentials (Vault + ExternalSecret)
+    #    # - name: git.credentials.enabled
+    #    #   value: "true"
+    #    # - name: git.credentials.host
+    #    #   value: "https://github.com"
+    #    # - name: git.credentials.vaultPath
+    #    #   value: "secret/data/hub/supply-chain/git-credentials"
+    #    # - name: qtodo.repository
+    #    #   value: "https://github.com/your-org/qtodo.git"
     #
     # ACS Central Services
     acs-central:
       name: acs-central-services
       namespace: stackrox
-      project: hub
+      argoProject: hub
       path: charts/acs-central
       overrides:
     # Uncomment and set if you need a specific StorageClass:
@@ -622,6 +588,9 @@ clusterGroup:
           value: "ztvp"
         - name: integration.keycloak.clientId
           value: "acs-central"
+        # Must match acs-secured-cluster clusterName (init bundle API name)
+        - name: clusterName
+          value: hub
     # ACS to scan images stored in Quay (Uncomment to enable)
     #    - name: integration.quay.enabled
     #      value: "true"
@@ -642,7 +611,7 @@ clusterGroup:
     acs-secured-cluster:
       name: acs-secured-cluster
       namespace: stackrox
-      project: hub
+      argoProject: hub
       path: charts/acs-secured-cluster
       overrides:
         - name: clusterName
@@ -656,7 +625,7 @@ clusterGroup:
     acs-policies:
       name: acs-policies
       namespace: stackrox
-      project: hub
+      argoProject: hub
       path: charts/acs-policies
       annotations:
         argocd.argoproj.io/sync-wave: "51"
@@ -774,7 +743,7 @@ clusterGroup:
 #    pipelines:
 #      name: pipelines
 #      namespace: production
-#      project: datacenter
+#      argoProject: datacenter
 #      path: applications/pipeline
 #      repoURL: https://github.com/you/applications.git
 #      targetRevision: stable
@@ -785,7 +754,7 @@ clusterGroup:
 #    pipelines_staging:
 #    - name: pipelines
 #      namespace: staging
-#      project: datacenter
+#      argoProject: datacenter
 #      path: applications/pipeline
 #      repoURL: https://github.com/you/applications.git
 #      targetRevision: main
@@ -798,7 +767,7 @@ clusterGroup:
 #    vendor-app:
 #      name: vendor-app
 #      namespace: default
-#      project: vendor
+#      argoProject: vendor
 #      path: path/to/myapp
 #      repoURL: https://github.com/vendor/applications.git
 #      targetRevision: main
