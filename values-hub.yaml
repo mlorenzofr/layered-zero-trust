@@ -364,7 +364,7 @@ clusterGroup:
       - name: app.oidc.clientId
         value: "651a5241-6ae8-4f2d-ac80-762fa9fa7916"
       - name: app.oidc.entraid.audience
-        value: "api://AzureADTokenExchange"
+        value: "651a5241-6ae8-4f2d-ac80-762fa9fa7916"
       - name: app.oidc.clientAssertion.enabled
         value: "true"
       - name: app.oidc.clientSecret.enabled

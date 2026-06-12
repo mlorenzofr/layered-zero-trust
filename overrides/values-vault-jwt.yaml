@@ -32,7 +32,7 @@ vault_jwt_policies:
     }
 vault_jwt_roles:
 - name: qtodo
-  audience: api://AzureADTokenExchange
+  audience: 651a5241-6ae8-4f2d-ac80-762fa9fa7916
   subject: spiffe://apps.{{ $.Values.global.clusterDomain }}/ns/qtodo/sa/qtodo
   policies:
   - apps-qtodo-jwt-secret
