@@ -18,6 +18,11 @@ In this project, we used the [qtodo](https://github.com/validatedpatterns-demos/
 > * `applications.noobaa-mcg` — NooBaa MCG object storage (required by Quay and RHTPA)
 > * `subscriptions.odf` and `subscriptions.quay-operator` and their namespace entries
 >
+> Additionally, uncomment the following Vault JWT roles in `overrides/values-vault-jwt.yaml` so that RHTPA and the pipeline ServiceAccount can authenticate to Vault via SPIFFE:
+>
+> * `rhtpa` role — allows RHTPA to read its OIDC credentials from Vault
+> * `supply-chain` role — allows the Tekton pipeline ServiceAccount to read git credentials, registry credentials, and RHTPA OIDC secrets from Vault
+>
 > If you prefer to use an external image registry instead of Quay, skip the Quay and NooBaa sections and set the registry parameters in the `supply-chain` application overrides accordingly.
 
 ## Components
@@ -267,6 +272,7 @@ Once the supply-chain application has synced in ArgoCD, start the pipeline using
    * For **git-auth**, the binding depends on the authentication mode (see [How it works](#how-it-works) for details):
      * **HTTPS mode**: select `Secret` and the name of the secret is `qtodo-git-credentials`. The `git-clone` ClusterTask's `basic-auth` workspace requires the secret to be provided explicitly; ServiceAccount-level credential injection alone is not sufficient for HTTPS.
      * **SSH mode**: leave **git-auth** unbound (empty). SSH credentials are injected automatically via the `pipeline` ServiceAccount. Binding the workspace directly causes the `git-clone` ClusterTask's `prepare.sh` to run a recursive `chmod` on the copied secret volume, which fails on the read-only Kubernetes projected volume symlinks.
+   * For **ssl-ca-directory** (HTTPS mode with internal Git hosts only): if `git.sslCABundle.enabled` is `true`, select `ConfigMap` and the name is `ztvp-trusted-ca`. This is only needed when cloning over HTTPS from a Git server behind a corporate or self-signed CA (see [Corporate CA Trust for Internal Git Hosts](#corporate-ca-trust-for-internal-git-hosts)).
 
 5. Press **Start** to finish and run the pipeline.
 
@@ -299,6 +305,10 @@ spec:
     - name: git-auth
       secret:
         secretName: qtodo-git-credentials
+    # Add this workspace when git.sslCABundle.enabled is true (internal Git hosts):
+    # - name: ssl-ca-directory
+    #   configMap:
+    #     name: ztvp-trusted-ca
 ```
 
 **SSH mode** (leave `git-auth` unbound):
@@ -475,6 +485,41 @@ When `git.credentials.enabled` is `true`:
   * **HTTPS mode**: the `git-auth` workspace **must** be bound to the `qtodo-git-credentials` secret. ServiceAccount-level credential injection alone is not sufficient -- without an explicit workspace binding, the `git-clone` ClusterTask cannot access the protected repository.
   * **SSH mode**: the `git-auth` workspace must be left **unbound**. SSH credentials are injected automatically via the ServiceAccount. Binding the workspace triggers the `git-clone` ClusterTask's `prepare.sh`, which runs a recursive `chmod` on the copied secret volume; this fails on the read-only Kubernetes projected volume symlinks and aborts the step.
 * The Vault policy `hub-supply-chain-jwt-secret` grants read access to `secret/data/hub/supply-chain/*` for the pipeline's SPIFFE identity.
+
+> [!NOTE]
+> If your internal Git server also uses a corporate or self-signed CA, see [Corporate CA Trust for Internal Git Hosts](#corporate-ca-trust-for-internal-git-hosts) to configure TLS trust.
+
+### Corporate CA Trust for Internal Git Hosts
+
+This section applies whenever the pipeline clones from a Git server whose TLS certificate is signed by a corporate or self-signed CA, regardless of whether the repository is private. It is only relevant for HTTPS clones; SSH connections do not use TLS certificate verification.
+
+> [!NOTE]
+> Public Git hosts (github.com, gitlab.com) use publicly trusted certificates and do not require this. If the repository is also private, combine these settings with the [Protected Repositories](#protected-repositories) configuration above.
+
+When a repository is hosted on an internal Git server (e.g. GitLab behind a corporate CA), the `git-clone` task will fail with `SSL certificate problem: self-signed certificate in certificate chain` because the pod does not trust the corporate CA.
+
+The `ztvp-certificates` chart already extracts and distributes the cluster's CA bundle (ingress, service, and any custom/corporate CAs). When the `supply-chain` feature is enabled, the `ztvp-trusted-ca` ConfigMap is automatically distributed to the pipeline namespace (`layered-zero-trust-hub`) via ACM policy.
+
+To make the `git-clone` task use this CA bundle, enable the SSL CA bundle mount in the `supply-chain` application overrides:
+
+```yaml
+- name: git.sslCABundle.enabled
+  value: "true"
+```
+
+This binds the `ztvp-trusted-ca` ConfigMap as the `ssl-ca-directory` workspace on the `git-clone` task and sets the `CRT_FILENAME` parameter to `tls-ca-bundle.pem` (matching the key in the ConfigMap). The upstream `git-clone` ClusterTask uses this file to set `GIT_SSL_CAPATH`, so TLS verification succeeds against internal Git servers.
+
+The corporate CA must be included in the `ztvp-trusted-ca` bundle. The easiest way is to use **automatic remote host extraction** -- add the Git host to `customCA.remoteHosts` in the `ztvp-certificates` overrides:
+
+```yaml
+# ztvp-certificates overrides in values-hub.yaml
+- name: customCA.remoteHosts[0]
+  value: "gitlab.internal.example.com"
+```
+
+The `ztvp-certificates` extraction Job will connect to the host on port 443, extract the full CA chain from the TLS handshake (no authentication needed), and merge it into the CA bundle. The CronJob keeps it fresh automatically.
+
+Alternatively, you can provide the CA certificate manually via `customCA.secretRef` or `customCA.additionalCertificates`. See the [ztvp-certificates documentation](./ztvp-certificates.md) for details.
 
 ### Init task (pre-flight image check)
 
