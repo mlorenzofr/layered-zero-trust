@@ -434,6 +434,9 @@ clusterGroup:
       path: charts/noobaa-mcg
       annotations:
         argocd.argoproj.io/sync-wave: "36"
+      overrides:
+        - name: noobaa.dbSize
+          value: 10Gi
     trusted-profile-analyzer:
       name: trusted-profile-analyzer
       namespace: trusted-profile-analyzer
