@@ -2,8 +2,8 @@ apiVersion: v2
 name: acs-central
 description: Red Hat Advanced Cluster Security Central Services
 type: application
-version: 1.0.0
-appVersion: "4.9"
+version: 1.1.0
+appVersion: "4.11"
 keywords:
   - security
   - compliance

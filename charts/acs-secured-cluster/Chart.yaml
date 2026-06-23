@@ -2,8 +2,8 @@ apiVersion: v2
 name: acs-secured-cluster
 description: Red Hat Advanced Cluster Security Secured Cluster Services
 type: application
-version: 1.0.0
-appVersion: "4.9"
+version: 1.0.1
+appVersion: "4.11"
 keywords:
   - security
   - runtime-protection

@@ -9,11 +9,12 @@ clusterName: ""  # Will be overridden by values-hub.yaml
 # Central endpoint configuration
 centralEndpoint: ""  # e.g., central-stackrox.apps.cluster.example.com:443
 
-# Init bundle secret (from Vault)
+# Cluster registration is handled by the CRS job in acs-central chart.
+# The CRS (Cluster Registration Secret) replaces the deprecated init-bundle approach.
+# Legacy init-bundle values kept for reference:
 initBundle:
   useExternalSecret: true
   secretName: collector-tls
-  # If not using external secret, provide bundle data
   data: ""
 
 # Sensor configuration

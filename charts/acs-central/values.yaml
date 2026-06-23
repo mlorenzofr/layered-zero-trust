@@ -1,7 +1,7 @@
 # Default values for ACS Central Services
 # This chart deploys the Central and Scanner components
 #
-# Cluster name for init bundle
+# Cluster name for CRS (Cluster Registration Secret) registration
 clusterName: ""  # Will be set from global.localClusterName by pattern framework
 
 global:
