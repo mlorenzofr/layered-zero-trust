@@ -360,11 +360,11 @@ clusterGroup:
       - name: app.oidc.provider
         value: "entraid"
       - name: app.oidc.entraid.tenantId
-        value: "6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee"
+        value: "520cf09d-78ff-44ed-a731-abd623e73b09"
       - name: app.oidc.clientId
-        value: "651a5241-6ae8-4f2d-ac80-762fa9fa7916"
+        value: "1353eba6-51a5-4a5d-aae3-cc929611622b"
       - name: app.oidc.entraid.audience
-        value: "651a5241-6ae8-4f2d-ac80-762fa9fa7916"
+        value: "1353eba6-51a5-4a5d-aae3-cc929611622b"
       - name: app.oidc.clientAssertion.enabled
         value: "true"
       - name: app.oidc.clientSecret.enabled
@@ -434,9 +434,9 @@ clusterGroup:
       - name: rhtas.zeroTrust.email.enabled
         value: "true"
       - name: rhtas.zeroTrust.email.issuer
-        value: "https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0"
+        value: "https://login.microsoftonline.com/520cf09d-78ff-44ed-a731-abd623e73b09/v2.0"
       - name: rhtas.fulcio.oidcIssuers.email.clientID
-        value: "10e1ec9e-3bee-4031-b80d-4002782f4fad"
+        value: "b5e462bc-ea76-4701-baae-922a2be8e394"
     tekton-chains:
       name: tekton-chains
       project: hub
@@ -464,13 +464,13 @@ clusterGroup:
         - /status
       overrides:
       - name: rhtpa.zeroTrust.oidc.authServerUrl
-        value: "https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0"
+        value: "https://login.microsoftonline.com/520cf09d-78ff-44ed-a731-abd623e73b09/v2.0"
       - name: rhtpa.zeroTrust.oidc.clients.frontend.clientId
-        value: "c25cdfc8-ffea-4e69-b98a-8d0157c9579e"
+        value: "1574091e-6ba7-41ed-879e-1c214cdc1638"
       - name: rhtpa.zeroTrust.oidc.clients.cli.clientId
-        value: "d65e3498-856b-4176-9024-f7992d4b98c1"
+        value: "16cd4f55-adba-4b34-9940-cc40b1630b72"
       - name: rhtpa.zeroTrust.oidc.clients.cli.apiId
-        value: "api://d65e3498-856b-4176-9024-f7992d4b98c1"  # Review
+        value: "api://16cd4f55-adba-4b34-9940-cc40b1630b72"  # Review
     supply-chain:
       name: supply-chain
       project: hub
@@ -495,21 +495,21 @@ clusterGroup:
       - name: rhtas.oidc.enabled
         value: "true"
       - name: rhtas.oidc.url
-        value: "https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0"
+        value: "https://login.microsoftonline.com/520cf09d-78ff-44ed-a731-abd623e73b09/v2.0"
       - name: rhtas.oidc.clientId
-        value: "10e1ec9e-3bee-4031-b80d-4002782f4fad"
+        value: "b5e462bc-ea76-4701-baae-922a2be8e394"
       - name: rhtas.oidc.clientSecretName
         value: ""
       - name: rhtas.oidc.issuer
-        value: "https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee/v2.0"
+        value: "https://login.microsoftonline.com/520cf09d-78ff-44ed-a731-abd623e73b09/v2.0"
       - name: rhtas.oidc.identity
         value: "manloren@redhat.com"
       - name: rhtpa.oidc.url
-        value: "https://login.microsoftonline.com/6047c7e9-b2ad-488d-a54e-dc3f6be6a7ee"
+        value: "https://login.microsoftonline.com/520cf09d-78ff-44ed-a731-abd623e73b09"
       - name: rhtpa.oidc.clientId
-        value: "d65e3498-856b-4176-9024-f7992d4b98c1"
+        value: "16cd4f55-adba-4b34-9940-cc40b1630b72"
       - name: rhtpa.oidc.apiId
-        value: "api://d65e3498-856b-4176-9024-f7992d4b98c1"  # Review
+        value: "api://16cd4f55-adba-4b34-9940-cc40b1630b72"  # Review
       - name: quay.enabled
         value: "true"
       - name: registry.tlsVerify
