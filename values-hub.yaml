@@ -470,7 +470,7 @@ clusterGroup:
       - name: rhtpa.zeroTrust.oidc.clients.cli.clientId
         value: "16cd4f55-adba-4b34-9940-cc40b1630b72"
       - name: rhtpa.zeroTrust.oidc.clients.cli.apiId
-        value: "api://16cd4f55-adba-4b34-9940-cc40b1630b72"  # Review
+        value: "16cd4f55-adba-4b34-9940-cc40b1630b72"  # UUID only - template prepends api://
     supply-chain:
       name: supply-chain
       project: hub
@@ -509,7 +509,7 @@ clusterGroup:
       - name: rhtpa.oidc.clientId
         value: "16cd4f55-adba-4b34-9940-cc40b1630b72"
       - name: rhtpa.oidc.apiId
-        value: "api://16cd4f55-adba-4b34-9940-cc40b1630b72"  # Review
+        value: "16cd4f55-adba-4b34-9940-cc40b1630b72"  # UUID only - script prepends api://
       - name: quay.enabled
         value: "true"
       - name: registry.tlsVerify
