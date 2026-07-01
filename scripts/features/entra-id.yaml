@@ -1,5 +1,16 @@
 # Azure Entra ID integration
 # Depends on: supply-chain
+#
+# IMPORTANT: Replace placeholders with your actual Azure Entra ID values:
+#   - <YOUR_TENANT_ID>: Directory (tenant) ID from Azure Portal
+#   - <YOUR_CLIENT_ID>: Application (client) ID for qtodo and RHTAS
+#   - <RHTPA_FRONTEND_CLIENT_ID>: Application (client) ID for RHTPA frontend
+#   - <RHTPA_API_CLIENT_ID>: Application (client) ID for RHTPA API/CLI
+#   - <YOUR_ENTRAID_EMAIL>: Your email address for RHTAS identity
+#
+# Note on apiId format:
+#   - For qtodo's app.oidc.entraid.audience: Use full URI format "api://UUID"
+#   - For RHTPA's apiId parameters: Use UUID only (templates/scripts prepend "api://")
 clusterGroup:
   merge_into_applications:
     qtodo:
@@ -52,7 +63,7 @@ clusterGroup:
           - name: rhtpa.zeroTrust.oidc.clients.cli.clientId
             value: "<RHTPA_API_CLIENT_ID>"
           - name: rhtpa.zeroTrust.oidc.clients.cli.apiId
-            value: "<RHTPA_API_API_ID>"
+            value: "<RHTPA_API_CLIENT_ID>"  # UUID only - Helm template prepends api://
     supply-chain:
       overrides:
         - name: rhtas.spire.enabled
@@ -74,5 +85,5 @@ clusterGroup:
         - name: rhtpa.oidc.clientId
           value: "<RHTPA_API_CLIENT_ID>"
         - name: rhtpa.oidc.apiId
-          value: "<RHTPA_API_API_ID>"
+          value: "<RHTPA_API_CLIENT_ID>"  # UUID only - script prepends api://
 

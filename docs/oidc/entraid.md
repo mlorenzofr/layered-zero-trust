@@ -728,7 +728,7 @@ In the `values-hub.yaml` file, we add the following configuration for the **trus
           - name: rhtpa.zeroTrust.oidc.clients.cli.clientId
             value: <RHTPA_API_CLIENT_ID>
           - name: rhtpa.zeroTrust.oidc.clients.cli.apiId
-            value: <RHTPA_API_API_ID>
+            value: <RHTPA_API_CLIENT_ID>  # UUID only - Helm template prepends api://
     supply-chain:
         overrides:
           - name: rhtpa.oidc.enabled
@@ -738,8 +738,10 @@ In the `values-hub.yaml` file, we add the following configuration for the **trus
           - name: rhtpa.oidc.clientId
             value: <RHTPA_API_CLIENT_ID>
           - name: rhtpa.oidc.apiId
-            value: <RHTPA_API_API_ID>
+            value: <RHTPA_API_CLIENT_ID>  # UUID only - script prepends api://
 ```
+
+> **Important:** The `apiId` parameters expect **only the UUID** (e.g., `16cd4f55-adba-4b34-9940-cc40b1630b72`), not the full Application ID URI format (`api://UUID`). The Helm templates and scripts automatically construct the full `api://UUID` scope format. Using the full URI will result in a double `api://` prefix and cause authentication failures.
 
 In the `values-secret.yaml` file, make sure that the secret `rhtpa-oidc-cli` uses the file with the secret associated with the _App Registration_ `rhtpa-api` instead of generating it dynamically.
 
@@ -763,3 +765,55 @@ In the `values-secret.yaml` file, make sure that the secret `rhtpa-oidc-cli` use
     - name: client-secret
       path: ~/.azure/ztvp-entraid-secret
 ```
+
+## Troubleshooting
+
+### RHTPA SBOM Upload Authentication Failures
+
+**Symptom:** The `qtodo-upload-sbom` pipeline task fails with HTTP 401 error during Azure Entra ID OIDC authentication:
+
+```text
+OIDC_SCOPE: api://api://16cd4f55-adba-4b34-9940-cc40b1630b72/.default
+curl: (22) The requested URL returned error: 401
+```
+
+**Root Cause:** The `rhtpa.oidc.apiId` parameter contains the full Application ID URI (`api://UUID`) instead of just the UUID. The `rhtpa.sh` script constructs the OIDC scope as `api://${OIDC_API_ID}/.default`, resulting in a double `api://` prefix.
+
+**Solution:** Update `values-hub.yaml` to use only the UUID:
+
+```yaml
+supply-chain:
+  overrides:
+    # CORRECT - UUID only
+    - name: rhtpa.oidc.apiId
+      value: "16cd4f55-adba-4b34-9940-cc40b1630b72"
+    
+    # WRONG - Full Application ID URI
+    # - name: rhtpa.oidc.apiId
+    #   value: "api://16cd4f55-adba-4b34-9940-cc40b1630b72"  # ❌ Results in double api://
+```
+
+The same applies to `rhtpa.zeroTrust.oidc.clients.cli.apiId` in the `trusted-profile-analyzer` overrides.
+
+**Verification:** After applying the fix and redeploying the pattern, check the pipeline logs:
+
+```bash
+oc logs -n layered-zero-trust-hub <upload-sbom-pod> | grep OIDC_SCOPE
+# Should show: OIDC_SCOPE: api://16cd4f55-adba-4b34-9940-cc40b1630b72/.default
+```
+
+### RHTPA UI Scope Misconfiguration
+
+**Symptom:** RHTPA UI authentication fails or shows scope errors.
+
+**Root Cause:** Same as above - the `rhtpa.zeroTrust.oidc.clients.cli.apiId` parameter contains the full URI, causing the Helm template to generate scopes like `api://api://UUID/create:document`.
+
+**Solution:** Verify the TrustedProfileAnalyzer CR has correct scopes:
+
+```bash
+oc get trustedprofileanalyzers -n trusted-profile-analyzer -o yaml | grep -A 5 "uiScope:"
+# Should show: api://16cd4f55-adba-4b34-9940-cc40b1630b72/create:document
+# NOT:         api://api://16cd4f55-adba-4b34-9940-cc40b1630b72/create:document
+```
+
+If the scopes have double `api://` prefix, update `values-hub.yaml` as described above and redeploy.
