@@ -33,7 +33,7 @@ rhtpa:
     enabled: true
     url: ""
     realm: "ztvp" # Keycloak realm to use for authentication
-    apiId: "" # Azure Entra ID API ID to use for authentication
+    apiId: "" # Azure Entra ID Application (client) ID - UUID only (e.g., "16cd4f55-adba-4b34-9940-cc40b1630b72"), NOT the full Application ID URI. The rhtpa.sh script prepends "api://" to construct the OIDC scope.
     clientId: "rhtpa-cli"
     clientSecretName: "qtodo-rhtpa-cli-password"
     # RHTPA OIDC CLI secret path (infra)
