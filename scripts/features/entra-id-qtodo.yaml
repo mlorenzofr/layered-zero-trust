@@ -1,13 +1,9 @@
-# Azure Entra ID integration
-# Depends on: supply-chain
+# Azure Entra ID integration for qtodo only (no supply-chain)
+# Depends on: (none)
 #
 # Replace placeholders with your actual Azure Entra ID values:
 #   - <YOUR_TENANT_ID>: Directory (tenant) ID from Azure Portal
 #   - <QTODO_CLIENT_ID>: Application (client) ID for qtodo
-#   - <RHTAS_CLIENT_ID>: Application (client) ID for RHTAS
-#   - <RHTPA_FRONTEND_CLIENT_ID>: Application (client) ID for RHTPA frontend
-#   - <RHTPA_API_CLIENT_ID>: Application (client) ID for RHTPA API/CLI
-#   - <YOUR_ENTRAID_EMAIL>: Your email address for RHTAS identity
 #
 clusterGroup:
   merge_into_applications:
@@ -46,44 +42,6 @@ clusterGroup:
         #   value: "secret/data/apps/qtodo/qtodo-oidc-entraid"
         # - name: app.oidc.clientAssertion.enabled
         #   value: "false"
-    trusted-artifact-signer:
-      overrides:
-        - name: rhtas.zeroTrust.email.issuer
-          value: "https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0"
-        - name: rhtas.fulcio.oidcIssuers.email.clientID
-          value: "<RHTAS_CLIENT_ID>"
-    trusted-profile-analyzer:
-        overrides:
-          - name: rhtpa.zeroTrust.oidc.authServerUrl
-            value: "https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0"
-          - name: rhtpa.zeroTrust.oidc.clients.frontend.clientId
-            value: "<RHTPA_FRONTEND_CLIENT_ID>"
-          - name: rhtpa.zeroTrust.oidc.clients.cli.clientId
-            value: "<RHTPA_API_CLIENT_ID>"
-          - name: rhtpa.zeroTrust.oidc.clients.cli.apiId
-            value: "<RHTPA_API_CLIENT_ID>"  # UUID only - Helm template prepends api://
-    supply-chain:
-      overrides:
-        - name: rhtas.spire.enabled
-          value: "false"
-        - name: rhtas.oidc.enabled
-          value: "true"
-        - name: rhtas.oidc.url
-          value: "https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0"
-        - name: rhtas.oidc.clientId
-          value: "<RHTAS_CLIENT_ID>"
-        - name: rhtas.oidc.clientSecretName
-          value: ""
-        - name: rhtas.oidc.issuer
-          value: "https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0"
-        - name: rhtas.oidc.identity
-          value: "<YOUR_ENTRAID_EMAIL>"
-        - name: rhtpa.oidc.url
-          value: "https://login.microsoftonline.com/<YOUR_TENANT_ID>"  # Do not include /v2.0
-        - name: rhtpa.oidc.clientId
-          value: "<RHTPA_API_CLIENT_ID>"
-        - name: rhtpa.oidc.apiId
-          value: "<RHTPA_API_CLIENT_ID>"  # UUID only - script prepends api://
     vault:
       jwt:
         roles:
