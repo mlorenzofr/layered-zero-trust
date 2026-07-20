@@ -128,32 +128,21 @@ Secrets are organized by component under the `secret/` KV mount. The table below
 |---|---|
 | `secret/apps/qtodo/qtodo-db` | `admin-password`, `db-password` — PostgreSQL credentials for the qtodo app |
 | `secret/apps/qtodo/qtodo-truststore` | `truststore-password` — Keycloak TLS truststore password for qtodo |
-| `secret/hub/infra/keycloak/keycloak` | `admin-password`, `db-password` — Keycloak admin and database credentials |
+| `secret/hub/infra/keycloak/keycloak` | `admin-password`, `db-password` — Keycloak admin (username: `admin`) and database credentials |
 | `secret/hub/infra/users/keycloak-users` | `qtodo-admin-password`, `qtodo-user1-password`, `rhtpa-user-password`, `rhtas-user-password` — application user passwords provisioned in Keycloak |
-| `secret/hub/infra/acs/acs-central` | `admin-password` — ACS Central admin password |
+| `secret/hub/infra/acs/acs-central` | `admin-password` — ACS Central password (see [ACS Central Access](#acs-central-access) below) |
 | `secret/hub/infra/quay/quay-users` | `quay-admin-password`, `quay-user-password` — Quay registry credentials _(optional component)_ |
 | `secret/hub/infra/rhtpa/rhtpa-db` | `db-password` — RHTPA PostgreSQL password _(optional component)_ |
 | `secret/hub/infra/rhtpa/rhtpa-oidc-cli` | `client-secret` — RHTPA Keycloak OIDC client secret _(optional component)_ |
 
-### Shortcut: Reading ESO-Synced Secrets from Kubernetes
+### ACS Central Access
 
-Several secrets are automatically synchronized from Vault to Kubernetes Secrets by the External Secrets Operator (ESO). These can be read directly without going through Vault and are useful when you just need a quick credential lookup.
+ACS Central supports two login methods:
 
-Keycloak user passwords (synced to `keycloak-system`):
+* **Keycloak OIDC** (default login page) — username `acs-admin`, password from Vault path `secret/hub/infra/acs/acs-central` → `admin-password`.
+* **Basic auth** — select "Login with username/password" on the login page — username `admin`, same password as above.
 
-```shell
-oc get secret -n keycloak-system keycloak-users -o json \
-  | jq -r '.data | map_values(@base64d)'
-```
-
-ACS Central admin password (synced to `stackrox`):
-
-```shell
-oc get secret -n stackrox central-htpasswd -o jsonpath='{.data.password}' | base64 -d
-```
-
-> [!NOTE]
-> The root token grants unrestricted access to all secrets in Vault. Use it only for development and testing. For day-to-day exploration of a specific component's credentials, prefer the narrower ESO-synced Kubernetes Secrets shown above.
+The `acs-admin` user is defined in the Keycloak `ztvp` realm and mapped to the ACS `Admin` role. The username is not stored in Vault; it is configured in the Keycloak realm import.
 
 ## Analytics Tracking
 
