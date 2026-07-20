@@ -140,7 +140,7 @@ Secrets are organized by component under the `secret/` KV mount. The table below
 ACS Central supports two login methods:
 
 * **Keycloak OIDC** (default login page) — username `acs-admin`, password from Vault path `secret/hub/infra/acs/acs-central` → `admin-password`.
-* **Basic auth** — select "Advanced" → "basic" on the login page — username `admin`, same password as above.
+* **Basic auth** — select "Login with username/password" on the login page — username `admin`, same password as above.
 
 The `acs-admin` user is defined in the Keycloak `ztvp` realm and mapped to the ACS `Admin` role. The username is not stored in Vault; it is configured in the Keycloak realm import.
 
