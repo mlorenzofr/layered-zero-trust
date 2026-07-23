@@ -391,6 +391,9 @@ clusterGroup:
       path: charts/netobserv
       annotations:
         argocd.argoproj.io/sync-wave: "42"
+      overrides:
+      - name: loki.storageClassName
+        value: lvms-vg1
   argoCD:
     resourceHealthChecks:
     - check: |
