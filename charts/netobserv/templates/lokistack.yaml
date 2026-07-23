@@ -18,7 +18,9 @@ spec:
     secret:
       name: {{ .Values.loki.storageSecretName }}
       type: s3
-  storageClassName: {{ .Values.loki.storageClassName }}
+{{- if .Values.loki.storageClassName }}
+      storageClassName: {{ .Values.loki.storageClassName }}
+{{- end }}
   tenants:
     mode: openshift-network
 {{- end }}

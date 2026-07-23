@@ -5,7 +5,7 @@ loki:
   namespace: netobserv-loki
   name: loki
   size: 1x.extra-small
-  storageClassName: gp3-csi
+  storageClassName: ""
   storageSecretName: loki-s3
   objectBucketClaim:
     name: netobserv-loki-obc
