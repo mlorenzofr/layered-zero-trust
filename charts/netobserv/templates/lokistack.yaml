@@ -1,4 +1,12 @@
 {{- if and .Values.enabled .Values.loki.enabled }}
+{{- $storageClass := .Values.loki.storageClassName }}
+{{- if not $storageClass }}
+  {{- range $sc := (lookup "storage.k8s.io/v1" "StorageClass" "" "").items }}
+    {{- if eq (index $sc.metadata.annotations "storageclass.kubernetes.io/is-default-class") "true" }}
+      {{- $storageClass = $sc.metadata.name }}
+    {{- end }}
+  {{- end }}
+{{- end }}
 apiVersion: loki.grafana.com/v1
 kind: LokiStack
 metadata:
@@ -11,6 +19,7 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   size: {{ .Values.loki.size }}
+  storageClassName: {{ $storageClass }}
   storage:
     schemas:
       - version: v13
@@ -18,9 +27,6 @@ spec:
     secret:
       name: {{ .Values.loki.storageSecretName }}
       type: s3
-{{- if .Values.loki.storageClassName }}
-      storageClassName: {{ .Values.loki.storageClassName }}
-{{- end }}
   tenants:
     mode: openshift-network
 {{- end }}
