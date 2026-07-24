@@ -106,8 +106,6 @@ sign_artifact() {
   fi
 
   cosign sign-blob "${1}" \
-    --fulcio-url "${FULCIO_URL}" \
-    --rekor-url "${REKOR_URL}" \
     ${OIDC_CLIENT_ID:+"--oidc-client-id=${OIDC_CLIENT_ID}"} \
     ${OIDC_CLIENT_SECRET_FILE:+"--oidc-client-secret-file=${OIDC_CLIENT_SECRET_FILE}"} \
     --bundle "${bundle}" \
@@ -144,8 +142,6 @@ sign_image() {
   fi
 
   cosign sign "${image_ref}" \
-    --fulcio-url "${FULCIO_URL}" \
-    --rekor-url "${REKOR_URL}" \
     ${OIDC_CLIENT_ID:+"--oidc-client-id=${OIDC_CLIENT_ID}"} \
     ${OIDC_CLIENT_SECRET_FILE:+"--oidc-client-secret-file=${OIDC_CLIENT_SECRET_FILE}"} \
     --yes
@@ -213,8 +209,6 @@ attest_sbom_image() {
   log_msg "SBOM_FORMAT: ${SBOM_FORMAT}"
 
   cosign attest "${image_ref}" \
-    --fulcio-url "${FULCIO_URL}" \
-    --rekor-url "${REKOR_URL}" \
     --predicate "${SBOM_FILE}" \
     --type "${SBOM_FORMAT}" \
     --yes
