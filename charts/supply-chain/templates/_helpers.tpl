@@ -79,15 +79,7 @@ Sigstore environment variables used in Pipeline Tasks
   value: $(params.tuf-url)/root.json
 - name: FULCIO_URL
   value: $(params.fulcio-url)
-- name: COSIGN_FULCIO_URL
-  value: $(params.fulcio-url)
-- name: SIGSTORE_FULCIO_URL
-  value: $(params.fulcio-url)
 - name: REKOR_URL
-  value: $(params.rekor-url)
-- name: COSIGN_REKOR_URL
-  value: $(params.rekor-url)
-- name: SIGSTORE_REKOR_URL
   value: $(params.rekor-url)
 - name: CA_FILE
   value: $(params.ca-file)
