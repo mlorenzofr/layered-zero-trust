@@ -7,6 +7,12 @@
 
 objectStorage:
   mode: odf
+  mcg:
+    dbSize: 10Gi
+    pvPool:
+      resources:
+        requests:
+          storage: 25Gi
 
 quayConfig:
   enabled: true
